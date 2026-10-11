@@ -281,6 +281,30 @@ Status: PASSED.
   stopped runner. No coverage/timeouts/assertions were weakened. API/CLI work
   began only after the actual successful result.
 
+## Phase 4 — Checkpoint 9: API and CLI integration
+
+Status: PASSED.
+
+- Four additive routes: space-weather status (explicit load), actual MSIS
+  density, and per-object decay/persistence; validated Pydantic requests and
+  responses preserve all eleven previous endpoints. No startup download.
+- Both orbit endpoints reproduce independently invoked service trajectories
+  exactly. Invalid horizons, boundaries, physical/weather values and naive
+  timestamps return 422; missing physical properties have an explicit status.
+  OpenAPI has fifteen paths and every local schema reference resolves.
+- Interactive `persistence` prompts for catalog ID, hypothetical properties,
+  horizon and scenarios; existing no-argument encounter interaction unchanged.
+  Noninteractive physical inputs require explicit `--assume-properties`.
+  Actual CLI subprocess retrieved ISS GP and invoked MSIS/propagation.
+- Focused command:
+  `../.venv/bin/python -m pytest tests/test_persistence_api_cli.py tests/test_api_engine.py tests/test_cli.py tests/test_startup.py -v -s --maxfail=1`:
+  **25 passed, 2 upstream warnings in 47.81 s**, exit **0**; includes actual
+  old API/CLI live flows and actual uvicorn HTTP startup.
+- Full `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **392 passed, 2 upstream warnings in 381.78 s**, exit **0**, all 378 prior
+  tests; zero failed/skipped/deselected. `git diff --check` exit 0.
+  Final end-to-end/performance work begins only after this verified gate.
+
 ## Phase 3 verified checkpoints
 
 ## Phase 3 — Checkpoint 1: preserve the existing backend

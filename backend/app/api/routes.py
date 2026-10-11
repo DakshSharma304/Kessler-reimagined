@@ -24,6 +24,10 @@ from app.probability.reference import ReferenceComparison
 from app.probability.integration import (DirectProbabilityRequest, ReferenceProbabilityRequest,
     ProbabilityBaselineAnalysis, ProbabilityManeuverSimulation, calculate_request,
     with_live_probability, with_maneuver_probability)
+from app.api.persistence_schemas import DensityRequest,PersistenceRequest,SpaceWeatherStatus
+from app.physics.atmosphere import DensityResult,calculate_density,forcing_from_dataset
+from app.physics.persistence_scenarios import PersistenceSettings
+from app.persistence import PersistenceAnalysis,analyze_orbital_persistence
 
 router = APIRouter(prefix="/api")
 
@@ -132,3 +136,35 @@ def screen(encounter_id: str, request: ScreenRequest, engine: Engine = Depends(g
 @router.get("/objects/{object_id}", response_model=OrbitalRecord, response_model_by_alias=False)
 def object_detail(object_id: str, engine: Engine = Depends(get_engine)):
     return engine.celestrak.get_object(object_id)
+
+
+@router.get("/space-weather/status",response_model=SpaceWeatherStatus)
+def space_weather_status(load: bool = False,engine: Engine = Depends(get_engine)):
+    dataset = engine.space_weather.load_space_weather() if load else engine.space_weather.dataset
+    return SpaceWeatherStatus(status="NOT_LOADED" if dataset is None else dataset.retrieval_mode,
+        coverage=None if dataset is None else dataset.coverage(),
+        warnings=["No source download unless load=true; forecast coverage is not observed future weather."])
+
+
+@router.post("/atmosphere/density",response_model=DensityResult)
+def atmosphere_density(request: DensityRequest,engine: Engine = Depends(get_engine)):
+    forcing = request.space_weather
+    if forcing is None:
+        forcing = forcing_from_dataset(request.timestamp,engine.space_weather.load_space_weather())
+    return calculate_density(request.timestamp,request.latitude_deg,request.longitude_deg,request.altitude_m,forcing)
+
+
+def persistence_request(object_id,request,engine):
+    settings = PersistenceSettings.model_validate(request.model_dump(exclude={"aerodynamic_properties","start_time"}))
+    return analyze_orbital_persistence(object_id,request.aerodynamic_properties,settings,
+        engine=engine,start_time=request.start_time)
+
+
+@router.post("/objects/{object_id}/decay",response_model=PersistenceAnalysis)
+def object_decay(object_id: str,request: PersistenceRequest,engine: Engine = Depends(get_engine)):
+    return persistence_request(object_id,request,engine)
+
+
+@router.post("/objects/{object_id}/persistence",response_model=PersistenceAnalysis)
+def object_persistence(object_id: str,request: PersistenceRequest,engine: Engine = Depends(get_engine)):
+    return persistence_request(object_id,request,engine)

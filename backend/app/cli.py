@@ -25,6 +25,12 @@ from app.probability.cdm import reference_cases
 from app.probability.integration import (DirectProbabilityRequest, with_live_probability,
     with_maneuver_probability, calculate_request)
 from app.probability.reference import ReferenceComparison, evaluate_reference
+from app.data.space_weather import SpaceWeatherUnavailable
+from app.data.celestrak import validate_object_id
+from app.physics.drag import ObjectAerodynamicProperties
+from app.physics.decay import SolverSettings
+from app.physics.persistence_scenarios import PersistenceSettings
+from app.persistence import analyze_orbital_persistence
 
 
 def screening_arguments(command):
@@ -110,6 +116,27 @@ def parser() -> argparse.ArgumentParser:
     optimize.add_argument("--screen-max-finalists", type=int, default=3)
     optimize.add_argument("--screen-total-timeout-seconds", type=float, default=90)
     screening_arguments(optimize)
+    weather = commands.add_parser("space-weather",help="Show source/cache coverage; --load explicitly retrieves data")
+    weather.add_argument("--load",action="store_true")
+    for name in ("decay","persistence"):
+        decay = commands.add_parser(name,help="Analyze orbital decay / persistence; omit ID for interactive input")
+        decay.add_argument("--object-id")
+        decay.add_argument("--mass-kg",type=float)
+        decay.add_argument("--area-m2",type=float)
+        decay.add_argument("--drag-coefficient",type=float)
+        decay.add_argument("--cd-area-over-mass",type=float)
+        decay.add_argument("--assume-properties",action="store_true",help="Explicitly acknowledge supplied properties are hypothetical, not catalog measurements")
+        decay.add_argument("--horizon-days",type=float,default=1)
+        decay.add_argument("--boundary-km",type=float,default=120)
+        decay.add_argument("--scenario-mode",choices=["NOMINAL","COMPARE"],default="NOMINAL")
+        decay.add_argument("--weather-mode",choices=["SOURCE_ONLY","HYPOTHETICAL_CONSTANT","SOURCE_WITH_EXPLICIT_FALLBACK"],default="SOURCE_ONLY")
+        decay.add_argument("--nominal-f107",type=float)
+        decay.add_argument("--nominal-ap",type=float)
+        decay.add_argument("--min-cd-area-over-mass",type=float)
+        decay.add_argument("--max-cd-area-over-mass",type=float)
+        decay.add_argument("--start-time")
+        decay.add_argument("--sample-step-seconds",type=float,default=600)
+        decay.add_argument("--timeout-seconds",type=float,default=180)
     return root
 
 
@@ -283,6 +310,46 @@ def interactive(engine, input_fn, output):
     return result
 
 
+def persistence_command(args,engine,input_fn,output):
+    if args.object_id is None:
+        if args.json:
+            raise ValueError("JSON persistence requires --object-id")
+        print("Analyze orbital decay / persistence — hypothetical properties, not measured object data.",file=output)
+        args.object_id = validate_object_id(input_fn("NORAD catalog ID: ").strip())
+        record = engine.celestrak.get_object(args.object_id)
+        print(f"{record.elements.object_name}; GP epoch {record.elements.epoch.isoformat()}",file=output)
+        args.mass_kg = ask_number("Assumed mass (kg): ",input_fn,output)
+        args.area_m2 = ask_number("Assumed effective area (m²): ",input_fn,output,inclusive=True)
+        args.drag_coefficient = ask_number("Assumed Cd: ",input_fn,output)
+        args.horizon_days = ask_number("Prediction horizon (days, at most 90): ",input_fn,output)
+        choice = ask_choice("Scenarios: 1 nominal source weather; 2 LOW/NOMINAL/HIGH comparison: ",{"1","2"},input_fn,output)
+        args.scenario_mode = "NOMINAL" if choice == "1" else "COMPARE"
+        args.assume_properties = True
+    supplied = any(x is not None for x in (args.mass_kg,args.area_m2,args.drag_coefficient,args.cd_area_over_mass))
+    if supplied and not args.assume_properties:
+        raise ValueError("Use --assume-properties to explicitly label hypothetical aerodynamic inputs")
+    properties = None if not supplied else ObjectAerodynamicProperties(input_category="HYPOTHETICAL_ASSUMPTION",
+        mass_kg=args.mass_kg,area_m2=args.area_m2,drag_coefficient=args.drag_coefficient,
+        cd_area_over_mass_m2_kg=args.cd_area_over_mass)
+    settings = PersistenceSettings(horizon_days=args.horizon_days,boundary_altitude_m=args.boundary_km*1000,
+        scenario_mode=args.scenario_mode,weather_mode=args.weather_mode,
+        nominal_f107_sfu=args.nominal_f107,nominal_ap=args.nominal_ap,
+        min_cd_area_over_mass_m2_kg=args.min_cd_area_over_mass,max_cd_area_over_mass_m2_kg=args.max_cd_area_over_mass,
+        solver=SolverSettings(sample_step_seconds=args.sample_step_seconds,timeout_seconds=args.timeout_seconds))
+    result = analyze_orbital_persistence(args.object_id,properties,settings,engine=engine,
+        start_time=None if args.start_time is None else parse_utc(args.start_time))
+    if not args.json:
+        print(f"{result.object_name} ({result.object_id}) — {result.prediction_status}\n"
+              f"GP epoch: {result.gp_epoch.isoformat()}; modeled horizon: {result.prediction_horizon_days:g} days",file=output)
+        print("ILLUSTRATIVE — USER-SUPPLIED AERODYNAMIC ASSUMPTIONS. Not an operational reentry prediction.",file=output)
+        for scenario in [] if result.scenario_analysis is None else result.scenario_analysis.scenarios:
+            print(f"{scenario.scenario}: {scenario.boundary.prediction_status}; cutoff {scenario.boundary.boundary_altitude_m/1000:g} km; "
+                  f"crossing time: {scenario.boundary.crossing_time}; specific energy change: {scenario.total_specific_energy_change_j_kg} J/kg",file=output)
+            print(f"  Environment: {scenario.environment_assumptions}",file=output)
+        for warning in [*result.assumptions,*result.warnings]: print(f"  - {warning}",file=output)
+    return result
+
+
 def main(argv=None, engine: Engine | None = None, input_fn=None, output=None, error_output=None) -> int:
     output = output or sys.stdout
     error_output = error_output or sys.stderr
@@ -295,7 +362,13 @@ def main(argv=None, engine: Engine | None = None, input_fn=None, output=None, er
                 raise ValueError("JSON mode requires list, analyze, simulate, optimize, screen, catalog, or probability command")
             interactive(engine, input_fn, output)
             return 0
-        if args.command == "probability" and (args.reference_case or args.list_reference_cases or args.input_file):
+        if args.command in {"decay","persistence"}:
+            result = persistence_command(args,engine,input_fn,output)
+        elif args.command == "space-weather":
+            data = engine.space_weather.load_space_weather() if args.load else engine.space_weather.dataset
+            result = {"status":"NOT_LOADED" if data is None else data.retrieval_mode,"coverage":None if data is None else data.coverage()}
+            if not args.json: print(json.dumps(result,indent=2),file=output)
+        elif args.command == "probability" and (args.reference_case or args.list_reference_cases or args.input_file):
             if args.covariance_file:
                 raise ValueError("--covariance-file is only supported with a live --encounter-id")
             if args.list_reference_cases:
@@ -378,7 +451,7 @@ def main(argv=None, engine: Engine | None = None, input_fn=None, output=None, er
             print(json.dumps(payload, allow_nan=False), file=output)
         return 0
     except (SourceUnavailable, OrbitalUnavailable, EncounterNotFound, CalculationUnavailable,
-            ManeuverError, PropagationError, ValueError, OSError) as error:
+            ManeuverError, PropagationError, ValueError, OSError,SpaceWeatherUnavailable) as error:
         if args.json:
             print(json.dumps({"status": "UNAVAILABLE" if isinstance(error, (SourceUnavailable, OrbitalUnavailable))
                               else "ERROR", "detail": str(error)}), file=output)

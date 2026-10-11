@@ -68,12 +68,14 @@ def test_every_endpoint_runs_real_engine(client, monkeypatch):
     assert optimized.json()["solutions"]
     assert calls == {name:1 for name in calls}
     schema = client.get("/openapi.json").json()
-    # Preserve every original route, both Phase 2 additions and the Phase 3 Pc route.
+    # Preserve all eleven Phase 1–3 paths and exactly the four Phase 4 additions.
     assert {path for path in schema["paths"] if path.startswith("/api/")} == {
         "/api/health", "/api/status", "/api/encounters", "/api/encounters/{encounter_id}",
         "/api/encounters/{encounter_id}/analyze", "/api/encounters/{encounter_id}/simulate",
         "/api/encounters/{encounter_id}/optimize", "/api/objects/{object_id}",
-        "/api/catalog/status", "/api/encounters/{encounter_id}/screen", "/api/probability/calculate"}
+        "/api/catalog/status", "/api/encounters/{encounter_id}/screen", "/api/probability/calculate",
+        "/api/space-weather/status", "/api/atmosphere/density", "/api/objects/{object_id}/decay",
+        "/api/objects/{object_id}/persistence"}
     object_ref = schema["paths"]["/api/objects/{object_id}"]["get"]["responses"]["200"]["content"]["application/json"]["schema"]["$ref"]
     object_schema = schema["components"]["schemas"][object_ref.rsplit("/", 1)[-1]]
     elements_ref = object_schema["properties"]["elements"]["$ref"]
