@@ -1,5 +1,64 @@
 # Implementation checkpoints
 
+## Phase 5 — Checkpoint policy and verified baseline
+
+Phase 5 follows the latest explicit user policy: diagnose/correct failures,
+rerun the entire checkpoint and relevant regressions, stop after three
+substantial unsuccessful attempts on the same blocker. This overrides the
+older first-failure policy for this phase only. Never advance a failed gate.
+
+### Checkpoint 1 — PASSED
+
+- Initially clean baseline `eac189cdc81e1d973b27e77280dab0008279037b`,
+  protected by tag `phase4-before-frontend-readiness`.
+- Inspected source/model/cache architecture, APIs/schemas, orbital/encounter
+  physics, numerical maneuvers/optimizer, secondary catalog screening, Pc,
+  MSIS/drag/persistence, CLI and test coverage. All **51 backend modules**
+  imported successfully; actual OpenAPI has **15 paths, 62 schemas**.
+- Full existing suite from backend:
+  `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **397 passed, 2 upstream warnings in 419.03 s**, exit **0**, no skips or
+  deselections. No Phase 5 implementation preceded this passing gate.
+- Actual-source/HTTP focused command covering startup, real API smoke, live
+  optimizer/screening/Pc, NASA references and HTTP decay:
+  **10 passed, 2 warnings in 27.19 s**, exit **0**. Actual API encounter
+  `socrates-599855ce2ca729ae50cb34e9` analyzed/simulated/optimized HTTP200.
+  Actual `socrates-f3f9e438db4c8a81fa4b93e5` optimizer COMPLETE, 13 evaluations;
+  secondary screening INCOMPLETE with 97 considered/19,505 available, no
+  safety pass; live Pc unavailable without covariance, MAX_PROB1 separate.
+  Four NASA cases still match independent reference tolerance2e-9, maximum
+  relative discrepancy1.242e-10. Real HTTP decay/persistence (.01 day) took
+  1.218/.641 s, no boundary reached; owned uvicorn processes stopped.
+- `pip check` exit0, no broken requirements. Warnings remain upstream
+  AnyIO deprecation and optional read-only Astropy cache; offline IERS used.
+- Gaps: no paginated object browser, bulk visualization positions, dedicated
+  ITRS trajectories, cleanup model/portfolio endpoint or CORS/server config.
+  Existing scientific services are working, not replacements to implement.
+  GP CLASSIFICATION_TYPE/U is a security marking, not object type. Real
+  object classification must be joined separately. Ordinary browsing must
+  not launch atmospheric simulations. Persistence output is presently
+  returned but not retained as reusable cleanup evidence.
+
+Current API request/response schemas (actual OpenAPI references; none invented):
+
+| Method/path | Request model | Response model |
+| --- | --- | --- |
+| GET /api/health | none | HealthResponse |
+| GET /api/status | none | StatusResponse |
+| GET /api/catalog/status | none | CatalogStatusResponse |
+| GET /api/encounters | bounded sort/limit/object_id/name query | EncounterListResponse |
+| GET /api/encounters/{encounter_id} | path ID | ScreenedEncounter |
+| POST /api/encounters/{encounter_id}/analyze | optional AnalyzeRequest | BaselineAnalysis or ProbabilityBaselineAnalysis |
+| POST /api/encounters/{encounter_id}/simulate | SimulateRequest | ManeuverSimulation or ProbabilityManeuverSimulation |
+| POST /api/encounters/{encounter_id}/optimize | OptimizeRequest | OptimizationResult |
+| POST /api/encounters/{encounter_id}/screen | ScreenRequest | ScreeningResult |
+| GET /api/objects/{object_id} | path ID | OrbitalRecord |
+| POST /api/probability/calculate | DirectProbabilityRequest or ReferenceProbabilityRequest | ProbabilityAnalysis or ReferenceComparison |
+| GET /api/space-weather/status | optional load query | SpaceWeatherStatus |
+| POST /api/atmosphere/density | DensityRequest | DensityResult |
+| POST /api/objects/{object_id}/decay | PersistenceRequest | PersistenceAnalysis |
+| POST /api/objects/{object_id}/persistence | PersistenceRequest | PersistenceAnalysis |
+
 ## Phase 4 — Checkpoint policy
 
 The latest explicit user instruction and AGENTS.md require stopping at the
