@@ -69,6 +69,34 @@ roundoff; eigenvalues are never clipped. Zero relative velocity is unsupported.
 
 ## Historical Phase 1 checkpoint policy
 
+## Phase 3 — Checkpoint 4: actual probability integration
+
+Status: PASSED after one evidence-based test-oracle correction. Initial actual
+targeted run failed (exit 1, 1 failed/3 passed) comparing rare isotropic Pc:
+integral `3.047134968841445e-73`, SciPy 1.15.3 `ncx2.cdf`
+`3.047134125939165e-73`. An independent positive-term Poisson/incomplete-gamma
+analytical expansion gave `3.0471349688414093e-73`; tightening quadrature
+from 1e-7 to 1e-12 converged to `3.0471349688414665e-73`. Cause: loss of
+accuracy in the extreme-tail reference CDF, not the disk integral. Replaced
+that test oracle with the converged analytical series, retained the original
+2e-9 relative assertion and added 128/256-term series convergence checks.
+Ordinary probabilities still independently cross-check `ncx2.cdf`.
+
+The engine performs actual Gaussian disk integration, analytic inner normal
+CDF and adaptive outer quadrature, with log-CDF tail differences. Missing
+radius/covariance and invalid matrices are rejected. Zero relative velocity,
+singular/condition>1e12 projected covariance, known missing cross-covariance
+and explicitly inapplicable rectilinear models return unsupported, not Pc.
+Numerical convergence/error and underflow are explicit. Physical covariance
+realism and rectilinear applicability are assumptions, not certified from
+instantaneous states; numerical error is not physical uncertainty.
+
+- Rerun all current probability tests: **52 passed, 1 warning in 2.92 s**, exit 0.
+- Full `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **249 passed, 2 warnings in 285.68 s**, exit **0**, all prior tests rerun.
+
+## Historical checkpoint records
+
 The user's explicit instruction takes precedence over the pasted task's
 fix-and-continue wording: execute each checkpoint, record actual results,
 and stop on the first failure with evidence and a likely cause.
