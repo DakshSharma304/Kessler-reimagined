@@ -36,6 +36,32 @@ in this repository, Vercel frontend and Modal Python backend. No ChatGPT Sites.
   overflow or fatal page errors:1 passed/5.4s, exit0. Screenshot reviewed.
   Globe/analysis content deliberately not claimed implemented at this gate.
 
+### Checkpoint 2 — PASSED
+
+- Interactive local NASA BlueMarble Earth, NaturalEarth fallback continents,
+  directional day/night lighting, restrained atmospheric rim, damped orbit/
+  zoom/reset/follow camera. No double Earth rotation. Batched THREE.Points,
+  per-object picking, known classifications/selection and actual orbit path.
+- Four bounded500-record catalog pages -> one2000-ID position request; all
+  rendered coordinates finite/OK ITRS km, tested `(x,z,-y)` radius scaling.
+  Five-second prediction samples, debounced scrubbing, ±1hour context window,
+  playback/pause/speed/reset; no frontend propagation or invented positions.
+- Typecheck/build exit0 (10.68s), all7 unit tests passed/1.55s. Entire real
+  browser regression2 passed/51.2s, exit0, no page/console errors: thousands
+  of real positions, camera drag/reset, ISS selection, actual new-epoch
+  backend response, filters, mobile shell. Desktop screenshot reviewed.
+- Initial browser failure identified Vite dependency-optimization reload
+  invalidating response body; explicit preoptimization and awaited captures
+  fixed the harness. Subsequent strict console test exposed missing favicon,
+  supplied actual local SVG. Screenshot found initial texture/material program
+  not refreshing; remounted material on texture availability. Full gate rerun
+  passed after corrections; no scientific/rendering assertions weakened.
+- Actual headless SwiftShader software rendering1.9FPS while interacting,
+  5 scene draw calls including orbit; one batched marker draw call. This is
+  not a claim of60FPS on this software GPU. Hardware/browser performance
+  remains an explicit final profiling concern. Original texture URL404;
+  genuine NASA57730 asset downloaded200, attribution/source retained.
+
 ## Phase 5 — Checkpoint policy and verified baseline
 
 Phase 5 follows the latest explicit user policy: diagnose/correct failures,
