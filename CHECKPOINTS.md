@@ -134,6 +134,47 @@ Status: PASSED.
   rerun; no skips, deselections or assertion weakening. Decay propagation
   began only after this gate passed.
 
+## Phase 4 — Checkpoint 5: decay propagation (blocked)
+
+Status: FAILED / STOPPED at first mandatory test failure, as requested.
+
+- Last verified implementation commit: `4d00e66` (Checkpoint 4, 344 passing
+  full-suite tests). Checkpoints 1–4 passed; Checkpoints 6–10 have not started.
+- New local work adds `app/physics/decay.py` and prepared MSIS evaluation:
+  bounded adaptive DOP853 with shared gravity/J2 and explicit drag, SI state
+  samples/osculating elements/total J2 energy, and batched Earth-orientation
+  interpolation. These propagation changes are **unverified**, not complete.
+- Actual command from backend:
+  `../.venv/bin/python -m pytest tests/test_decay.py tests/test_drag.py tests/test_atmosphere.py -v -s --maxfail=1`.
+- **41 tests collected; 1 failed, 1 upstream warning in 2.88 s; exit 1**.
+  Remaining 40 tests were unrun after the hard stop, not passed or skipped.
+  Full Checkpoint 5 regressions have not run.
+- Failed test:
+  `tests/test_decay.py::test_orientation_and_prepared_density_independently_checked`.
+  Actual exception:
+
+  ```text
+  ValueError: Weather forcing requires matching UTC date and aware timestamp
+  forcing.date = datetime.date(2026, 10, 9)
+  timestamp = datetime.datetime(2026, 10, 10, 11, 59, 59, tzinfo=datetime.timezone.utc)
+  ```
+
+- Read-only inspection confirms the test imports `test_atmosphere.weather`,
+  which intentionally creates a fixed 2026-10-09 forcing for same-day density
+  tests. The new decay test uses `lambda at: weather()` and spans 86,399 s
+  from October 9 at noon into October 10. At the final timestamp the existing
+  correctly strict forcing validator rejects that previous day's record.
+  Coordinate assertions execute before this rejection; this failure is a
+  new test-input epoch mismatch, not evidence of a failed MSIS installation.
+- Likely correction: make the controlled hypothetical weather provider assign
+  the queried UTC date while preserving its explicitly assumed constant solar
+  history, in both direct and prepared evaluation paths. Keep the midnight
+  test, strict date validation, and numerical tolerances. Do not relabel real
+  observations or silently carry real forecasts into unsupported dates.
+- No correction applied. Awaiting user authorization before rerunning this
+  checkpoint or implementing boundary detection, scenarios, persistence,
+  new APIs/CLI or final performance workflows.
+
 ## Phase 3 verified checkpoints
 
 ## Phase 3 — Checkpoint 1: preserve the existing backend
