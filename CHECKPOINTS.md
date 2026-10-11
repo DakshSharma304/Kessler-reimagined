@@ -91,6 +91,27 @@ Current API request/response schemas (actual OpenAPI references; none invented):
   of global ranking. Cold actual-source example took38.160785s including
   catalog/SATCAT/SOCRATES ingestion. Modeled priority ranking, not mission plan.
 
+### Checkpoint 3 — PASSED
+
+- Added five paths (six operations): paginated/searchable/classified objects,
+  bounded bulk positions, object metadata, sampled orbit, and GET/POST
+  encounter trajectories. All 15 existing paths/contracts retained.
+- Real SGP4 arrays -> actual Astropy TEME/ITRS transforms; numerical maneuver
+  paths GCRS -> ITRS. Visualization positions km, aware UTC timestamps,
+  explicit Three.js mapping (x,z,-y); no raw-TEME relabeling or meter/km mix.
+  Max2000 batch IDs, max1001 path samples, max24h single-orbit interval;
+  isolated SGP4/unsupported-epoch/missing-object nulls and error statuses.
+- Focused tests **19 passed, 2 warnings in21.79s**, exit0. First run found
+  vectorized SGP4's requirement for contiguous Julian-date arrays; copied
+  NumPy column views to contiguous buffers (unchanged values/model), then
+  reran the entire checkpoint. Independent direct-Astropy conversion,
+  units, timestamps, actual SGP4 error isolation, search/filter/detail,
+  participant IDs, bounds, optimizer anchor and zero-burn consistency pass.
+- Actual benchmark **1200/1200 OK**, finite positions, **0.090567s**, JSON
+  **304,086 bytes**; source ingestion preloaded and measured separately.
+- Full current regression: **428 passed, 2 warnings in591.04s**, exit0,
+  no skips/deselections. Exactly20 OpenAPI paths, every schema ref resolves.
+
 ## Phase 4 — Checkpoint policy
 
 The latest explicit user instruction and AGENTS.md require stopping at the

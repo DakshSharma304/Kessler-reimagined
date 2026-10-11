@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from app.api.routes import router
+from app.api.visualization_routes import router as visualization_router
 from app.config import settings
 from app.engine import Engine
 from app.data.discovery import EncounterNotFound
@@ -17,6 +18,7 @@ from app.physics.propagation import PropagationError
 app = FastAPI(title=settings.service, version=settings.version)
 app.state.engine = Engine()
 app.include_router(router)
+app.include_router(visualization_router)
 
 
 async def scientific_error(_request, error):
