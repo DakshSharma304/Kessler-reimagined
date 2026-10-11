@@ -7,6 +7,8 @@ from app.models.maneuver import ManeuverConstraints
 from app.models.catalog import CatalogMetadata
 from app.models.screening import ScreeningRequest, SecondaryOptimizationSettings
 from app.optimization.optimizer import SearchSettings
+from app.probability.availability import ProbabilityInputs
+from app.probability.comparison import FixedCovarianceScenario
 
 
 class ScreenedEncounter(Encounter):
@@ -34,6 +36,8 @@ class StatusResponse(BaseModel):
 class AnalyzeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
     half_window_seconds: float = Field(default=300, gt=0, le=1800)
+    probability_analysis: bool = False
+    probability_inputs: ProbabilityInputs | None = None
 
 
 class SimulateRequest(BaseModel):
@@ -42,6 +46,7 @@ class SimulateRequest(BaseModel):
     maneuver_time: AwareDatetime
     delta_v_rtn_m_s: tuple[float, float, float]
     hypothetical_capability_assumed: Literal[True]
+    probability_scenario: FixedCovarianceScenario | None = None
 
 
 class OptimizeRequest(ManeuverConstraints):

@@ -19,6 +19,11 @@ from app.optimization.screened_optimizer import optimize_with_secondary_screenin
 from app.physics.encounters import BaselineAnalysis, analyze_encounter
 from app.physics.maneuvers import ManeuverSimulation, simulate_maneuver
 from app.secondary import screen_proposed_maneuver
+from app.probability.availability import ProbabilityAnalysis
+from app.probability.reference import ReferenceComparison
+from app.probability.integration import (DirectProbabilityRequest, ReferenceProbabilityRequest,
+    ProbabilityBaselineAnalysis, ProbabilityManeuverSimulation, calculate_request,
+    with_live_probability, with_maneuver_probability)
 
 router = APIRouter(prefix="/api")
 
@@ -77,17 +82,26 @@ def encounter_detail(encounter_id: str, engine: Engine = Depends(get_engine)):
     return view(engine.discovery.get_encounter(encounter_id))
 
 
-@router.post("/encounters/{encounter_id}/analyze", response_model=BaselineAnalysis)
+@router.post("/probability/calculate", response_model=ProbabilityAnalysis | ReferenceComparison)
+def probability_calculate(request: DirectProbabilityRequest | ReferenceProbabilityRequest):
+    return calculate_request(request)
+
+
+@router.post("/encounters/{encounter_id}/analyze", response_model=ProbabilityBaselineAnalysis | BaselineAnalysis)
 def analyze(encounter_id: str, request: AnalyzeRequest | None = None,
             engine: Engine = Depends(get_engine)):
-    return analyze_encounter(*engine.selected_case(encounter_id),
-                             half_window_seconds=(request or AnalyzeRequest()).half_window_seconds)
+    options = request or AnalyzeRequest()
+    case = engine.selected_case(encounter_id)
+    result = analyze_encounter(*case, half_window_seconds=options.half_window_seconds)
+    return with_live_probability(case, result, options.probability_inputs) if options.probability_analysis or options.probability_inputs is not None else result
 
 
-@router.post("/encounters/{encounter_id}/simulate", response_model=ManeuverSimulation)
+@router.post("/encounters/{encounter_id}/simulate", response_model=ProbabilityManeuverSimulation | ManeuverSimulation)
 def simulate(encounter_id: str, request: SimulateRequest, engine: Engine = Depends(get_engine)):
-    return simulate_maneuver(*engine.selected_case(encounter_id), request.maneuvering_object_id,
+    case = engine.selected_case(encounter_id)
+    result = simulate_maneuver(*case, request.maneuvering_object_id,
         request.maneuver_time, request.delta_v_rtn_m_s, request.hypothetical_capability_assumed)
+    return result if request.probability_scenario is None else with_maneuver_probability(case, result, request.probability_scenario)
 
 
 @router.post("/encounters/{encounter_id}/optimize", response_model=OptimizationResult)

@@ -20,6 +20,11 @@ from app.physics.encounters import CalculationUnavailable, analyze_encounter
 from app.physics.maneuvers import ManeuverError, simulate_maneuver
 from app.physics.propagation import PropagationError
 from app.secondary import screen_proposed_maneuver
+from app.probability.availability import ProbabilityInputs
+from app.probability.cdm import reference_cases
+from app.probability.integration import (DirectProbabilityRequest, with_live_probability,
+    with_maneuver_probability, calculate_request)
+from app.probability.reference import ReferenceComparison, evaluate_reference
 
 
 def screening_arguments(command):
@@ -57,12 +62,23 @@ def parser() -> argparse.ArgumentParser:
     listing.add_argument("--name")
     analyze = commands.add_parser("analyze", help="Recalculate a selected encounter with current GP elements")
     analyze.add_argument("--encounter-id", required=True)
+    analyze.add_argument("--probability", action="store_true", help="Report honest covariance-based Pc availability")
+    analyze.add_argument("--covariance-file", type=Path, help="Explicit SUPPLIED/ASSUMED covariance-input JSON at analyzed TCA")
     simulate = commands.add_parser("simulate", help="Simulate one actual hypothetical velocity impulse")
     simulate.add_argument("--encounter-id", required=True)
     simulate.add_argument("--object-id", required=True)
     simulate.add_argument("--maneuver-time", required=True, help="ISO timestamp; timezone omitted means UTC")
     simulate.add_argument("--delta-v-rtn", nargs=3, type=float, required=True, metavar=("R", "T", "N"))
     simulate.add_argument("--assume-capability", action="store_true")
+    simulate.add_argument("--probability-scenario-file", type=Path, help="Covariance JSON including fixed_covariance=true; always illustrative")
+    probability = commands.add_parser("probability", help="NASA independent-model validation or live Pc availability/scenario")
+    selection = probability.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--reference-case", choices=reference_cases())
+    selection.add_argument("--encounter-id")
+    selection.add_argument("--list-reference-cases", action="store_true")
+    selection.add_argument("--input-file", type=Path, help="Direct common-inertial-frame Pc request JSON")
+    probability.add_argument("--independent-benchmark", action="store_true", help="Explicitly acknowledge NASA reference benchmark omits known DCP correlations")
+    probability.add_argument("--covariance-file", type=Path, help="Live SUPPLIED/ASSUMED covariance-input JSON")
     screen = commands.add_parser("screen", help="Compare nominal/modified trajectories within declared catalog coverage")
     screen.add_argument("--encounter-id", required=True)
     screen.add_argument("--object-id", required=True)
@@ -106,6 +122,25 @@ def show_encounters(encounters, output):
               f"   TCA: {encounter.time_of_closest_approach.isoformat()}\n"
               f"   SOCRATES MAX_PROB screening metric: {encounter.socrates_max_probability}", file=output)
     print("MAX_PROB is not a calibrated collision probability.", file=output)
+
+
+def show_probability(result, output):
+    if isinstance(result, ReferenceComparison):
+        print(f"Historical NASA independent-model benchmark: {result.reference_case}\n"
+              f"Published precise Pc2D: {result.published_reference_pc:.12g}\n"
+              f"CDM rounded Pc: {result.cdm_rounded_reference_pc}\n"
+              f"Independent Kessler Pc: {result.calculated_pc}\n"
+              f"Numerical difference: {result.numerical_difference}\n"
+              f"Relative difference: {result.relative_difference}\n"
+              f"Linear TCA rounding correction: {result.linear_tca_offset_seconds:.9g} s", file=output)
+    else:
+        print(f"Probability status: {result.probability_status}\n"
+              f"SOCRATES MAX_PROB screening metric (not Pc): {result.socrates_max_probability}\n"
+              f"Covariance-based Pc: {result.calculated_pc}", file=output)
+        if result.label:
+            print(result.label, file=output)
+    for explanation in [*result.assumptions, *result.warnings]:
+        print("  - " + explanation, file=output)
 
 
 def show_results(result: OptimizationResult, output):
@@ -257,10 +292,25 @@ def main(argv=None, engine: Engine | None = None, input_fn=None, output=None, er
     try:
         if args.command is None:
             if args.json:
-                raise ValueError("JSON mode requires list, analyze, simulate, optimize, screen, or catalog command")
+                raise ValueError("JSON mode requires list, analyze, simulate, optimize, screen, catalog, or probability command")
             interactive(engine, input_fn, output)
             return 0
-        if args.command == "catalog":
+        if args.command == "probability" and (args.reference_case or args.list_reference_cases or args.input_file):
+            if args.covariance_file:
+                raise ValueError("--covariance-file is only supported with a live --encounter-id")
+            if args.list_reference_cases:
+                result = {"source": "NASA_CARA_HISTORICAL_REFERENCE", "reference_cases": reference_cases()}
+                if not args.json:
+                    print(json.dumps(result, indent=2), file=output)
+            elif args.input_file:
+                result = calculate_request(DirectProbabilityRequest.model_validate_json(args.input_file.read_text()))
+                if not args.json:
+                    show_probability(result, output)
+            else:
+                result = evaluate_reference(args.reference_case, independent_benchmark=args.independent_benchmark)
+                if not args.json:
+                    show_probability(result, output)
+        elif args.command == "catalog":
             result = engine.catalog.load_screening_catalog(screening_settings(args)["catalog_selection"]).metadata
             if not args.json:
                 print(result.model_dump_json(indent=2), file=output)
@@ -277,9 +327,20 @@ def main(argv=None, engine: Engine | None = None, input_fn=None, output=None, er
             encounter, first, second = engine.selected_case(args.encounter_id)
             if args.command == "analyze":
                 result = analyze_encounter(encounter, first, second)
+                if args.probability or args.covariance_file:
+                    inputs = None if args.covariance_file is None else ProbabilityInputs.model_validate_json(args.covariance_file.read_text())
+                    result = with_live_probability((encounter, first, second), result, inputs)
+            elif args.command == "probability":
+                inputs = None if args.covariance_file is None else ProbabilityInputs.model_validate_json(args.covariance_file.read_text())
+                result = with_live_probability((encounter, first, second), analyze_encounter(encounter, first, second), inputs).probability_analysis
+                if not args.json:
+                    show_probability(result, output)
             elif args.command == "simulate":
                 result = simulate_maneuver(encounter, first, second, args.object_id,
                     parse_utc(args.maneuver_time), tuple(args.delta_v_rtn), args.assume_capability)
+                if args.probability_scenario_file:
+                    result = with_maneuver_probability((encounter, first, second), result,
+                        json.loads(args.probability_scenario_file.read_text()))
             elif args.command == "screen":
                 request = ScreeningRequest(**screening_settings(args), encounter_id=args.encounter_id,
                     maneuvering_object_id=args.object_id, maneuver_time=parse_utc(args.maneuver_time),
@@ -310,14 +371,14 @@ def main(argv=None, engine: Engine | None = None, input_fn=None, output=None, er
                         secondary_settings=settings, catalog=catalog, cache=engine.catalog_propagation_cache)
                 if not args.json:
                     show_results(result, output)
-            if not args.json and args.command not in {"optimize", "screen"}:
+            if not args.json and args.command not in {"optimize", "screen", "probability"}:
                 print(result.model_dump_json(indent=2), file=output)
         if args.json:
             payload = result.model_dump(mode="json") if hasattr(result, "model_dump") else result
             print(json.dumps(payload, allow_nan=False), file=output)
         return 0
     except (SourceUnavailable, OrbitalUnavailable, EncounterNotFound, CalculationUnavailable,
-            ManeuverError, PropagationError, ValueError) as error:
+            ManeuverError, PropagationError, ValueError, OSError) as error:
         if args.json:
             print(json.dumps({"status": "UNAVAILABLE" if isinstance(error, (SourceUnavailable, OrbitalUnavailable))
                               else "ERROR", "detail": str(error)}), file=output)

@@ -142,8 +142,6 @@ No covariance, radius or independence for known correlations is fabricated.
 - Full `../.venv/bin/python -m pytest -q --maxfail=1`:
   **267 passed, 2 warnings in 258.41 s**, exit **0**, all 255 prior tests rerun.
 
-## Historical records below
-
 ## Phase 3 — Checkpoint 7: maneuver probability comparison
 
 Status: PASSED after correcting one new test's wrong existing field name.
@@ -168,6 +166,36 @@ unsupported. Results are tested not to mutate the simulation.
   **271 passed, 2 warnings in 262.27 s**, exit **0**, all prior tests rerun.
 
 ## Historical Phase 1 and Phase 2 records
+
+## Phase 3 — Checkpoint 8: API and CLI
+
+Status: PASSED. Added `POST /api/probability/calculate` for explicit SI
+common-frame geometry/covariance requests and explicitly acknowledged
+historical NASA reference benchmarks. Optional `probability_analysis` /
+`probability_inputs` on analyze and `probability_scenario` on simulate.
+Default response JSON is unchanged (verified exact equality). Optimizer,
+screening, health, object and discovery endpoints retain their behavior.
+The existing exact route-set assertion now includes the one required new
+probability route while retaining all ten previous routes.
+
+CLI supports NASA reference selection/listing, independent calculation,
+published precise and rounded Pc and numerical differences; live availability;
+explicit covariance JSON; direct calculation JSON; and acknowledged fixed
+covariance maneuver scenarios. No frontend or network access is required for
+NASA fixture evaluation. Missing files and invalid input return nonzero exit.
+OpenAPI schemas and all local references validated.
+
+- Focused new plus original API/CLI tests: **30 passed, 2 warnings in 43.95 s**,
+  exit **0**.
+- Actual NASA CLI process exited **0**; Terra/Iridium Pc
+  `0.021173811560374473`, difference `6.217248937900877e-15` from precise NASA.
+- Actual live CLI process exited **0**, retrieved/refined real case
+  `socrates-f3f9e438db4c8a81fa4b93e5`: MAX_PROB **1.0** separately,
+  Pc **UNAVAILABLE_NO_COVARIANCE**, calculated Pc null.
+- Full `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **291 passed, 2 warnings in 279.38 s**, exit **0**, all 271 prior tests rerun.
+
+## Historical records below
 
 The user's explicit instruction takes precedence over the pasted task's
 fix-and-continue wording: execute each checkpoint, record actual results,
