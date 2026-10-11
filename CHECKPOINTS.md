@@ -1,5 +1,80 @@
 # Implementation checkpoints
 
+## Phase 4 — Checkpoint policy
+
+The latest explicit user instruction and AGENTS.md require stopping at the
+first failed mandatory checkpoint: inspect actual errors, diagnose the likely
+cause, record evidence, and request authorization before correcting or
+continuing. This takes precedence over the pasted Phase 4 retry policy.
+No subsequent stage begins before its predecessor passes.
+
+## Phase 4 — Checkpoint 1: verified Phase 3 baseline
+
+Status: PASSED (2026-10-11).
+
+- Initially clean checkout at `23aa4c423155d99284f470853e33030a0241e00a`,
+  preserved with Git tag `phase3-before-orbital-decay`.
+- Inspected README, historical checkpoint evidence, pinned dependencies,
+  orbital models, SGP4, frame utilities, numerical integrator/J2, optimizer,
+  secondary screening, probability engine, API and CLI. Existing public
+  interfaces and startup/test commands are documented in README.
+- Reusable numerical convention: validated `StateVector`, aware UTC times,
+  metres/m/s, real SGP4 TEME-to-GCRS position and velocity transforms,
+  WGS84 central gravity/J2 and adaptive `solve_ivp` DOP853. Existing short
+  maneuver integrations hold the Earth pole at the reference epoch.
+  GP BSTAR is orbital metadata, not a supplied physical ballistic coefficient.
+  New long-horizon density work must use actual Earth-fixed/geodetic positions.
+- Full baseline command, from backend:
+  `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **302 passed, 2 warnings in 282.11 s**, exit **0**. No skipped or deselected
+  tests, weakened assertions, replacement scientific fixtures, or code changes.
+- Additional verbose verification:
+  `../.venv/bin/python -m pytest tests/test_probability_end_to_end.py::test_actual_live_geometry_scenario_maneuver_optimizer_and_screening tests/test_probability_reference.py tests/test_startup.py -v -s --maxfail=1`:
+  **8 passed, 2 warnings in 17.65 s**, exit **0**.
+- Real SOCRATES/GP case `socrates-f3f9e438db4c8a81fa4b93e5`: optimizer
+  COMPLETE, 13 evaluated simulations. Secondary screening executed against
+  19,506 available catalog records, considered 4 under its explicit bounded
+  budget, correctly INCOMPLETE with no policy pass. Live covariance-based Pc
+  UNAVAILABLE_NO_COVARIANCE; real SOCRATES MAX_PROB remains separately 1.0.
+  Explicit assumed covariance scenario baseline Pc `6.304736762114633e-7`,
+  modified Pc `5.926506440598308e-7`, not measured risk.
+- All four genuine historical NASA benchmarks independently recalculated;
+  maximum relative discrepancy `1.242e-10` against tolerance `2e-9`.
+  Actual uvicorn subprocess served HTTP health successfully and was stopped.
+- `../.venv/bin/python -m pip check`: no broken requirements, exit **0**.
+  Warnings remain upstream AnyIO deprecation and read-only optional Astropy
+  cache; installed offline IERS data were used. No installation was needed.
+
+## Phase 4 — Checkpoint 2: real space-weather ingestion
+
+Status: PASSED.
+
+- Verified live CelesTrak SpaceData listing and format documentation, both
+  curl exit 0. Actual linked `SW-All.csv` downloaded with HTTP 200, exit 0;
+  original source timestamp `2026-10-11T06:32:11Z` (HTTP Last-Modified).
+- Added `app/data/space_weather.py`, reusing atomic checksum-validated
+  FileCache; six-hour refresh bounds, provider failure preserves valid cache,
+  stale status and halted retries. No orbital calculation code changed.
+- CSV preserves Earth-distance vs 1-AU-adjusted flux, centered vs trailing
+  81-day averages, daily vs three-hourly Ap, missing/null values and separate
+  solar qualifiers OBS/INT/PRD/PRM. The CSV does not establish per-field
+  geomagnetic issue/provenance times, explicitly warned. No monthly-to-daily
+  extrapolation. As-of backtests require an appropriately archived snapshot.
+- Actual downloaded dataset: **25,436 records**, date range **1957-10-01
+  through 2041-10-01**; last observed flux **2026-10-10**; daily solar forecast
+  **2026-10-11 through 2026-11-24**; monthly solar forecasts **2026-12-01
+  through 2041-10-01** are not complete daily environmental coverage.
+  Cache fetch `2026-10-11T06:57:19.081233Z`; checksum
+  `41fee3d7fda0943aa78e94e99b4070de9f9e8334a6fc3e5319d73a5bf3bb4e88`.
+- `../.venv/bin/python -m pytest tests/test_space_weather.py -v -s --maxfail=1`:
+  **11 passed in 3.26 s**, exit 0, including actual external HTTP ingestion,
+  historical numerical values, categories, malformed input, missing data,
+  coverage, cache and simulated provider failures (network isolation only).
+- Full regression `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **313 passed, 2 upstream warnings in 322.01 s**, exit 0; all 302 previous
+  tests rerun, no skips or deselections. Density implementation did not begin
+  until this gate passed.
+
 ## Phase 3 verified checkpoints
 
 ## Phase 3 — Checkpoint 1: preserve the existing backend
