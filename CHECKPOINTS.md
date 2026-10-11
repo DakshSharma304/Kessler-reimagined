@@ -1,5 +1,41 @@
 # Implementation checkpoints
 
+## Phase 6 — frontend checkpoint policy and baseline
+
+The latest Phase6 brief authorizes fixing/retesting failures, with a hard stop
+after three substantial unsuccessful attempts on the same blocker; every gate
+must pass before dependent development. This supersedes the older first-failure
+repository policy for this explicitly requested phase. User visual/deployment
+instructions take precedence: restrained Apple-inspired UI, regular React code
+in this repository, Vercel frontend and Modal Python backend. No ChatGPT Sites.
+
+- Clean verified backend baseline5d758b74f11e8a68fe4fddafca3dcdb80f4922ac,
+  protected by local tag `phase5-before-frontend`; scientific engines unchanged.
+- Read complete Phase6 brief, FRONTEND_CONTRACT, OpenAPI, README, actual routes,
+  source/status/frame/unit and calculation schemas before frontend development.
+- Actual backend started on8000; initial smoke reached it before readiness:
+  `[Errno 111] Connection refused`. After actual healthHTTP200, full documented
+  smoke rerun exited0: all six workflows, real encounter/optimizer/secondary
+  screening, NASA Pc, actual MSIS/persistence and cleanup. This was a startup
+  timing failure, not a scientific result. Screening INCOMPLETE and no live Pc
+  remain disclosed. No failed gate was advanced.
+- Existing pinned Python environment reused. Node24.19.0/npm11.9.0 and actual
+  system Chromium154 available. Frontend dependencies/test tools are scoped to
+  frontend with a lockfile; no Python dependency or scientific source rewrite.
+
+### Checkpoint 1 — PASSED
+
+- React19/TypeScript5/Vite7 initialized under frontend; actual OpenAPI-generated
+  types, TanStack query client, Zustand UI state, Motion/reduced-motion shell,
+  Lucide controls and graphite styling. API base configurable with explicit
+  production validation, readable scientific/validation/network errors.
+- npm install exit0 (244 packages/44s), lockfile retained. TypeScript and
+  production build exit0 (3.91s),4 API contract unit tests passed (820ms).
+- Actual Chromium browser with real backend health: navigation changes view,
+  panels close/reopen, responsive390x844 shell renders with no document
+  overflow or fatal page errors:1 passed/5.4s, exit0. Screenshot reviewed.
+  Globe/analysis content deliberately not claimed implemented at this gate.
+
 ## Phase 5 — Checkpoint policy and verified baseline
 
 Phase 5 follows the latest explicit user policy: diagnose/correct failures,
