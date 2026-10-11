@@ -175,6 +175,29 @@ Status: FAILED / STOPPED at first mandatory test failure, as requested.
   checkpoint or implementing boundary detection, scenarios, persistence,
   new APIs/CLI or final performance workflows.
 
+### Phase 4 checkpoint 5 — Authorized correction and successful retest
+
+Status: PASSED after explicit user authorization.
+
+- Corrected only the new synthetic test's weather provider to stamp the queried
+  UTC day while retaining explicitly hypothetical constant solar history.
+  The midnight-crossing case, date validator and all numerical tolerances remain.
+- Entire focused checkpoint command rerun:
+  **41 passed, 1 upstream warning in 11.15 s**, exit 0. This includes zero-drag
+  agreement with the original integrator, drag/energy/area-mass/density response,
+  actual MSIS low/high-altitude trajectories, units, convergence and invalid data.
+- Tightened rtol 1e-9→1e-11, position/velocity absolute tolerances and max-step
+  120→60 s independently: final-position difference **4.229284e-5 m** in the
+  controlled three-hour propagation (ordinary runtime **0.423904 s**).
+  Direct-vs-prepared Astropy/ERFA geographic and actual MSIS comparisons passed
+  on both sides of midnight. Density itself is never interpolated.
+- Full `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **354 passed, 2 upstream warnings in 340.64 s**, exit 0; all 344 prior tests,
+  no skips, deselections or weakened assertions. Bound to 90 modeled days and
+  explicit computation budget. Osculating J2 oscillations/element altitude
+  convention and fixed gravity pole limitations are disclosed in output.
+- Boundary detection development began only after this successful gate.
+
 ## Phase 3 verified checkpoints
 
 ## Phase 3 — Checkpoint 1: preserve the existing backend

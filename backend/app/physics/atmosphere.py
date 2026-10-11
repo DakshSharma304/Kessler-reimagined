@@ -143,6 +143,39 @@ class MSISAtmosphere:
         return {"model":"NRLMSIS 2.1", "implementation":"pymsis 0.12.0",
                 "weather":"Explicit provider; each output must retain forcing provenance", "density_units":"kg/m3"}
 
+    def prepare(self,orientation):
+        return PreparedMSISAtmosphere(self.weather,orientation)
+
+
+class PreparedMSISAtmosphere(MSISAtmosphere):
+    """Reuse validated three-hour forcing; no density interpolation/substitution."""
+    def __init__(self,weather,orientation):
+        super().__init__(weather)
+        self.orientation = orientation
+        self.forcings = {}
+
+    def density(self,state):
+        at = state.timestamp.astimezone(UTC)
+        slot = at.replace(hour=(at.hour//3)*3,minute=0,second=0,microsecond=0)
+        if slot not in self.forcings:
+            self.forcings[slot] = self.weather(at).checked(at)
+        forcing = self.forcings[slot]
+        geo = self.orientation.geodetic(state)
+        if not 0 <= geo.altitude_m <= 1000000:
+            raise ValueError("Prepared MSIS position outside supported domain")
+        when = np.datetime64(at.replace(tzinfo=None),"us")
+        output = pymsis.calculate([when],[geo.longitude_deg],[geo.latitude_deg],[geo.altitude_m/1000],
+            f107s=[forcing.f107_previous_day_sfu],f107as=[forcing.f107_center81_sfu],
+            aps=[forcing.ap_history],version=2.1,geomagnetic_activity=forcing.geomagnetic_mode)
+        density = float(output.reshape(-1,11)[0,pymsis.Variable.MASS_DENSITY])
+        if not math.isfinite(density) or density <= 0:
+            raise ValueError("MSIS returned invalid density")
+        return density
+
+    def provenance(self):
+        return super().provenance() | {"forcing_samples":[w.model_dump(mode="json") for w in self.forcings.values()],
+            "coordinate_method":"Validated Astropy SO(3) interpolation + ERFA WGS84; actual MSIS at every force call"}
+
 
 class ConstantTestAtmosphere:
     """Controlled verification atmosphere, never selected by real-data defaults."""
