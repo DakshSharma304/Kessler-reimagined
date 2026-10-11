@@ -155,12 +155,21 @@ class PreparedMSISAtmosphere(MSISAtmosphere):
         self.forcings = {}
 
     def density(self,state):
-        at = state.timestamp.astimezone(UTC)
-        slot = at.replace(hour=(at.hour//3)*3,minute=0,second=0,microsecond=0)
+        return self.density_at(state.timestamp,self.orientation.geodetic(state))
+
+    def density_at(self,timestamp,geo: GeodeticPosition):
+        """Actual MSIS at an already evaluated, validated geodetic position.
+
+        The integrator supplies the same geometry used for its altitude check.
+        This shares coordinates only; density is never interpolated/cached.
+        """
+        if timestamp.tzinfo is None:
+            raise ValueError("MSIS requires an aware timestamp")
+        at = timestamp.astimezone(UTC)
+        slot = (at.date(),at.hour//3)
         if slot not in self.forcings:
             self.forcings[slot] = self.weather(at).checked(at)
         forcing = self.forcings[slot]
-        geo = self.orientation.geodetic(state)
         if not 0 <= geo.altitude_m <= 1000000:
             raise ValueError("Prepared MSIS position outside supported domain")
         when = np.datetime64(at.replace(tzinfo=None),"us")

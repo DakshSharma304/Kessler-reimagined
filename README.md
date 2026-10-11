@@ -24,8 +24,9 @@ Phase 3 adds covariance-based collision probability (Pc): strict historical
 NASA CDM ingestion, per-object covariance transformations, deterministic
 Gaussian collision-disk integration, honest live availability, and optional
 illustrative fixed-covariance maneuver comparisons. The original simulator,
-clearance optimizer and default API/CLI responses are preserved. No frontend,
-decay model, cleanup optimization or extra dependencies were added.
+clearance optimizer and default API/CLI responses are preserved. Phase 3 added
+no frontend, decay model, cleanup optimization or extra dependencies; the
+separate Phase 4 persistence model is documented below.
 All **nine Phase 3 checkpoints passed**. Final complete suite: **302 passed,
 2 upstream warnings in 297.29 seconds**—all 197 prior tests plus 105 new tests,
 with zero failed, skipped or deselected tests.
@@ -62,6 +63,10 @@ The health endpoint is `GET /api/health`; interactive API documentation is at
 | POST | `/api/encounters/{id}/screen` | Compare nominal and differential post-burn trajectories |
 | GET | `/api/objects/{id}` | Selected GP record, epoch and provenance |
 | POST | `/api/probability/calculate` | Supplied common-frame Pc or explicit NASA reference benchmark |
+| GET | `/api/space-weather/status` | Weather snapshot/coverage; `load=true` explicitly retrieves |
+| POST | `/api/atmosphere/density` | Actual NRLMSIS 2.1 density from explicit/source weather |
+| POST | `/api/objects/{id}/decay` | Bounded gravity/J2/drag propagation and boundary status |
+| POST | `/api/objects/{id}/persistence` | Same propagation with scenario/persistence metrics |
 
 An unknown encounter returns 404. Invalid requests and unsupported scientific
 inputs return 422; unavailable source/orbital data return 503 with an explicit
@@ -211,7 +216,7 @@ over the modeled interval. RTN transverse is perpendicular to radial in the
 orbital plane; it is not always exactly the eccentric-orbit velocity direction.
 All optimizer candidates share a common numerical reference epoch and baseline.
 
-The force model excludes drag, higher harmonics, third-body forces and future
+The existing collision-avoidance force model excludes drag, higher harmonics, third-body forces and future
 real spacecraft maneuvers. Maneuver lead times are capped at 48 hours. Cached
 installed IERS data are used without network downloads; predictive Earth
 orientation is a limitation. The initial search is local ±300 seconds around
@@ -738,3 +743,204 @@ live SOCRATES/GP geometry, illustrative anisotropic uncertainty and maneuver
 comparison, and existing clearance optimization plus secondary screening.
 Partial catalog coverage/time limits still produce INCOMPLETE screening,
 never a safety pass. Final checkpoint totals are recorded in `CHECKPOINTS.md`.
+
+## Phase 4: atmospheric drag and orbital persistence
+
+Backend-only research calculations using **NRLMSIS 2.1**, explicitly selected
+through **pymsis 0.12.0**, real CelesTrak space weather and actual selected GP
+initial states. The separate long-horizon propagator shares the existing central
+gravity/J2 equations; it does not replace the maneuver simulator or optimizer.
+No frontend, debris-cleanup ranking, ground-impact model or Pc-based search.
+All **ten Phase 4 checkpoints passed**, including the authorized performance
+correction. Final full suite: **397 passed, 2 upstream warnings in 529.01 s**,
+all 302 Phase 3 tests plus 95 Phase 4 tests, with zero failures/skips/deselections.
+Checkpoint history, authorized corrections and verification are in
+`CHECKPOINTS.md`.
+
+### Inputs, source coverage and output meaning
+
+Supply either all three of mass (kg), area (m²), Cd, or an explicit Cd*A/m
+(m²/kg). Missing values are never filled in; SGP4 BSTAR is not converted into
+physical properties. Parameters must identify `USER_SUPPLIED` or
+`HYPOTHETICAL_ASSUMPTION`. CLI example inputs additionally require
+`--assume-properties` and are always labeled hypothetical.
+
+The observed source is the actual CelesTrak `SW-All.csv` snapshot. The verified
+snapshot contains **25,436 rows**, 1957-10-01–2041-10-01; last observed solar flux
+**2026-10-10**, daily solar forecast **2026-10-11–2026-11-24**. Records after
+2026-12-01 are monthly solar forecasts, **not complete daily model forcing**.
+These dates are snapshot-specific, not a permanent coverage promise. Inspect
+the status endpoint for the current source/cache timestamp and checksum.
+Weather refresh is bounded to six hours; valid stale data retain explicit
+provenance if refresh fails. As-of research requires an archived snapshot;
+today's retrospective data are not silently treated as forecasts issued earlier.
+
+MSIS receives previous-day Earth-distance F10.7, the modeled date's centered
+81-day average and the seven-component storm-time Ap history. Solar qualifiers
+and geomagnetic metadata limitations remain explicit; centered averages can
+include predictions. No implicit pymsis downloads or default solar values.
+
+Weather treatments:
+
+- `SOURCE_ONLY` (default): unavailable forcing produces an explicit failure,
+  never silent extrapolation or substitution.
+- `HYPOTHETICAL_CONSTANT`: explicitly supply nominal F10.7 and Ap; no weather
+  download is needed, and the result is a user-assumed scenario, not a forecast.
+- `SOURCE_WITH_EXPLICIT_FALLBACK`: use source forcing where usable, otherwise
+  the supplied hypothetical F10.7/Ap; each forcing sample discloses its origin.
+
+`COMPARE` runs three actual trajectories: LOW_DRAG with a constant 80-sfu/Ap4
+history, NOMINAL using the selected weather treatment, and HIGH_DRAG with
+220-sfu/Ap40. These are illustrative environmental histories, not density
+multipliers or statistical confidence bounds. Labels do not guarantee ordering
+for arbitrary real storm conditions. Optional minimum/maximum Cd*A/m inputs
+must bracket the nominal ratio; failed scenarios remain visible.
+
+Results include the actual initial state/GP epoch, assumed properties, sampled
+geodetic altitude, density, central and total-J2 specific energy, osculating
+elements, event status, scenario envelope, source checksum and numerical settings.
+Band occupancy is **piecewise-linear instantaneous WGS84 geodetic sample altitude**,
+not perigee/apogee categories. Default bands are 120–250, 250–500 and 500–1000 km;
+unclassified time is explicit. Occupancy is a sample-based approximation.
+
+### API examples
+
+Start the API with the existing command above. These are **hypothetical example
+properties, not measured ISS properties**:
+
+```sh
+curl 'http://127.0.0.1:8000/api/space-weather/status?load=true'
+curl -X POST http://127.0.0.1:8000/api/objects/25544/persistence \
+  -H 'Content-Type: application/json' \
+  -d '{"horizon_days":1,"scenario_mode":"COMPARE","aerodynamic_properties":{"input_category":"HYPOTHETICAL_ASSUMPTION","mass_kg":100,"area_m2":1,"drag_coefficient":2.2}}'
+curl -X POST http://127.0.0.1:8000/api/objects/25338/decay \
+  -H 'Content-Type: application/json' \
+  -d '{"horizon_days":1,"aerodynamic_properties":{"input_category":"HYPOTHETICAL_ASSUMPTION","cd_area_over_mass_m2_kg":0.022}}'
+curl -X POST http://127.0.0.1:8000/api/atmosphere/density \
+  -H 'Content-Type: application/json' \
+  -d '{"timestamp":"2026-10-11T08:40:37Z","latitude_deg":0,"longitude_deg":0,"altitude_m":400000}'
+```
+
+Update the density example's aware UTC timestamp for the desired modeled time
+within usable source coverage. Optional `space_weather` accepts a complete
+`WeatherForcing` model; see `/docs`. Optional `start_time` selects the orbit's
+initial epoch, restricted to seven days from the GP epoch. Omit properties to
+receive `INSUFFICIENT_OBJECT_PROPERTIES`, not a guessed calculation.
+
+Both object routes return `PersistenceAnalysis`; per-scenario boundary status
+is one of `BOUNDARY_REACHED`, `NOT_REACHED_WITHIN_HORIZON`,
+`INSUFFICIENT_OBJECT_PROPERTIES`, `INSUFFICIENT_ENVIRONMENT_DATA`,
+`INITIAL_STATE_UNSUPPORTED`, `NUMERICAL_FAILURE`, `MODEL_OUT_OF_VALIDITY`.
+Comparison status is COMPLETE/PARTIAL/UNAVAILABLE. No-crossing/failed times
+are null. Invalid requests return 422; unavailable GP/direct-density sources
+return 503. Missing scenario weather is retained as an explicit per-scenario
+INSUFFICIENT_ENVIRONMENT_DATA status rather than a fabricated trajectory.
+
+### CLI examples
+
+From `backend/`, using the root virtual environment:
+
+```sh
+../.venv/bin/python -m app.cli persistence
+../.venv/bin/python -m app.cli --json space-weather --load
+../.venv/bin/python -m app.cli --json persistence --object-id 25544 \
+  --mass-kg 100 --area-m2 1 --drag-coefficient 2.2 --assume-properties \
+  --horizon-days 1 --scenario-mode COMPARE
+../.venv/bin/python -m app.cli --json decay --object-id 25338 \
+  --cd-area-over-mass .022 --assume-properties --horizon-days 1
+../.venv/bin/python -m app.cli --json persistence --object-id 25544 \
+  --cd-area-over-mass .022 --assume-properties --horizon-days 1 \
+  --weather-mode HYPOTHETICAL_CONSTANT --nominal-f107 150 --nominal-ap 15
+```
+
+The first command interactively prompts for ID, displays GP name/epoch, and
+requests hypothetical physical inputs, horizon and scenario choice. No-argument
+CLI behavior still runs the original collision-avoidance workflow. Global JSON/
+cache options precede commands. `--boundary-km` defaults to 120; `--help` lists
+ballistic range, explicit fallback and output-sampling options.
+
+### Numerical model, limits and verification
+
+SGP4 WGS72 supplies the initial TEME position/velocity, actually transformed to
+GCRS with Astropy. The DOP853 integrator uses shared WGS84 central gravity/J2,
+plus −½ρ(Cd*A/m)|v−ω×r|(v−ω×r), with atmospheric co-rotation at
+7.292115e-5 rad/s. Actual geographic density coordinates/rotation axes use
+time-varying GCRS→ITRS orientation, validated SO(3) interpolation at ≤20-minute
+spacing and ERFA WGS84 geodetic conversion. Density is calculated by real MSIS
+at every force evaluation, **not interpolated**. The gravity pole remains fixed
+at the initial epoch, explicitly preserving the shared existing force convention.
+
+Default tolerances are rtol 1e−9, position atol 1e−4 m, velocity atol 1e−7 m/s,
+maximum integration step 120 s, output spacing 600 s and propagation budget 180 s.
+Horizon is bounded to 90 days; large/difficult runs may explicitly exhaust the
+budget. Initial altitude must be above the configured cutoff and ≤1000 km.
+The default event is a terminal descending **120-km WGS84 geodetic boundary**,
+configurable 80–500 km. Numerical trial stages can bracket below the cutoff,
+but no returned trajectory extends past it; model trial domain is 80–1000 km.
+This is **not ground impact, ablation or an operational reentry date**.
+
+Verified boundary root **1310.210038 s** agreed with independent existing
+numerical dynamics plus direct Astropy/brentq to <0.002 s. Three-hour controlled
+trajectory refinement changed final position by **4.23e−5 m**; one-day actual
+GP/weather/MSIS refinement by **0.178 m**. These quantify numerical convergence,
+not physical accuracy. Optimized drag matched independent NumPy cross-product
+results exactly across 200 states; unchanged actual-MSIS scalar integration also
+matched the optimized path. No tolerances, step caps or timeout were relaxed.
+
+Initial GP errors, unknown attitude/aerodynamics, omitted active maneuvers,
+winds, higher harmonics/third bodies, fixed gravity pole, offline predictive
+Earth orientation and unknown long-term solar activity limit fidelity. The ISS
+example is a **passive hypothetical scenario**, not an ISS operational forecast.
+J2 makes osculating semimajor axis oscillate; a higher endpoint does not negate
+negative total-energy change. Period-window sample means also depend on sampling
+phase and overlap on short horizons; they are not precise secular decay rates.
+No-crossing means only "not reached within this modeled horizon", not infinite
+lifetime. Covariance/physical uncertainty is not propagated or statistically
+calibrated; scenario bounds are not confidence intervals.
+
+### Actual-machine benchmarks and modules
+
+Successful focused run (2026-10-11 04:40:37 EDT / 08:40:37 UTC): actual ISS
+initial altitude 429.151 km and NOAA 15 796.865 km, both from genuine GP.
+Hypothetical Cd*A/m=.022. One-day modeled total-energy changes were
+−703.525 J/kg / −3.669 J/kg, respectively; neither crossed the boundary.
+ISS 30 days modeled −14,321.601 J/kg, not observed decay.
+LOW/source-NOMINAL/HIGH one-day losses were 240.931/703.525/2915.749 J/kg;
+doubling Cd*A/m with unchanged source weather produced 1409.022 J/kg loss.
+
+| Measurement | Actual wall time |
+| --- | --- |
+| Cached real weather load/parse | 0.707s |
+| 100 actual MSIS density evaluations | 0.00575s |
+| 100 direct / prepared coordinate evaluations | 0.5365s / 0.00127s |
+| ISS one-day / seven-day / thirty-day workflow | 4.80s / 25.37s / 110.15s |
+| NOAA15 one-day workflow | 5.40s |
+| Three one-day scenarios | 12.42s |
+| Actual HTTP decay / persistence, .01-day horizon | 1.450s / 0.635s |
+
+These depend on hardware/load and include service overhead where labeled.
+An earlier thirty-day run exhausted 180 s; authorized removal of redundant
+coordinate/validation work resolved that benchmark without changing model,
+solver settings or budget. Details and original failure remain in CHECKPOINTS.
+
+New modules: `data/space_weather.py` (source/cache), `physics/atmosphere.py`
+(MSIS/forcing/coordinates), `physics/drag.py` (validated physical force),
+`physics/decay.py` (numerical evolution), `physics/boundary.py` (event/status),
+`physics/persistence_scenarios.py` (explicit uncertainty scenarios),
+`persistence.py` (real-object service/metrics), `api/persistence_schemas.py`,
+and `persistence_benchmark.py`. Existing routes/CLI gained additive commands.
+
+Reproduce measurements and verification from `backend/`:
+
+```sh
+../.venv/bin/python -m app.persistence_benchmark
+../.venv/bin/python -m app.persistence_benchmark --profile
+../.venv/bin/python -m pytest tests/test_decay_performance_fix.py tests/test_persistence_end_to_end.py -v -s --maxfail=1
+../.venv/bin/python -m pytest -q --maxfail=1
+```
+
+Profiling itself adds runtime, so profiled timings are not interchangeable with
+the unprofiled benchmark; computation limits remain explicit. Live tests require
+source access. Full regression also includes genuine NASA Pc fixtures, live
+SOCRATES/GP, optimization and secondary screening; incomplete catalog coverage
+still cannot yield a safety guarantee.

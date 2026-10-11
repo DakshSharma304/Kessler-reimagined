@@ -39,11 +39,24 @@ def acceleration_drag(state, density_kg_m3, properties: ObjectAerodynamicPropert
     if not math.isfinite(density_kg_m3) or density_kg_m3 < 0:
         raise ValueError("Density must be finite, nonnegative kg/m³")
     pole = np.asarray(pole,dtype=float)
-    if pole.shape != (3,) or not np.isfinite(pole).all() or not np.isclose(np.linalg.norm(pole),1,rtol=0,atol=1e-10):
+    if pole.shape != (3,) or not np.isfinite(pole).all() or abs(np.linalg.norm(pole)-1) > 1e-10:
         raise ValueError("Unit GCRS Earth pole required for atmospheric co-rotation")
-    atmosphere_velocity = np.cross(EARTH_ANGULAR_SPEED_RAD_S*pole,np.asarray(state.position_m))
-    relative = np.asarray(state.velocity_m_s)-atmosphere_velocity
-    result = -.5*density_kg_m3*properties.effective_ratio*np.linalg.norm(relative)*relative
+    result = _drag_from_validated_components(np.asarray(state.position_m),np.asarray(state.velocity_m_s),
+        density_kg_m3,properties.effective_ratio,pole)
     if not np.isfinite(result).all():
         raise ValueError("Nonfinite drag acceleration")
     return result
+
+
+def _drag_from_validated_components(position,velocity,density,ratio,pole):
+    """Private SI kernel; callers validate finite states/rho and unit pole.
+
+    The propagator's pole comes from a validated SO(3) rotation, while its
+    aerodynamic ratio is validated once at the integration boundary. Scalar
+    cross-product components avoid NumPy's generic axis/broadcast machinery.
+    """
+    wx,wy,wz = EARTH_ANGULAR_SPEED_RAD_S*pole
+    x,y,z = position
+    atmosphere_velocity = np.array((wy*z-wz*y,wz*x-wx*z,wx*y-wy*x))
+    relative = velocity-atmosphere_velocity
+    return -.5*density*ratio*np.linalg.norm(relative)*relative

@@ -19,7 +19,7 @@ from scipy.integrate import solve_ivp
 from scipy.spatial.transform import Rotation, Slerp
 
 from app.physics.atmosphere import GeodeticPosition
-from app.physics.drag import acceleration_drag
+from app.physics.drag import ObjectAerodynamicProperties, _drag_from_validated_components
 from app.physics.frames import earth_pole_gcrs, teme_to_gcrs
 from app.physics.maneuvers import EARTH_RADIUS, J2, MU_EARTH, gravity_components
 from app.physics.propagation import StateVector
@@ -98,18 +98,32 @@ class EarthOrientation:
         transformed = GCRS(axes,obstime=dates).transform_to(ITRS(obstime=dates))
         matrices = transformed.cartesian.xyz.to_value(u.m).T.reshape(-1,3,3).transpose(0,2,1)
         self.interpolator = Slerp(offsets,Rotation.from_matrix(matrices))
+        self._last_timestamp = None
+        self._last_rotation = None
 
     def rotation(self,timestamp):
         if not self.start <= timestamp <= self.end:
             raise DecayUnsupported("Earth-orientation query outside prepared interval")
-        return self.interpolator((timestamp-self.start).total_seconds()).as_matrix()
+        if timestamp != self._last_timestamp:
+            matrix = self.interpolator((timestamp-self.start).total_seconds()).as_matrix()
+            matrix.setflags(write=False)
+            self._last_timestamp,self._last_rotation = timestamp,matrix
+        return self._last_rotation
 
     def geodetic(self,state):
         return self.position_geodetic(state.timestamp,np.asarray(state.position_m))
 
     def position_geodetic(self,timestamp,position):
-        lon,lat,height = erfa.gc2gd(1,self.rotation(timestamp)@position)
+        return self._geodetic_with_rotation(self.rotation(timestamp),position)
+
+    @staticmethod
+    def _geodetic_with_rotation(rotation,position):
+        lon,lat,height = erfa.gc2gd(1,rotation@position)
         return GeodeticPosition(latitude_deg=math.degrees(lat),longitude_deg=math.degrees(lon),altitude_m=float(height))
+
+    def geodetic_and_pole(self,timestamp,position):
+        rotation = self.rotation(timestamp)
+        return self._geodetic_with_rotation(rotation,position),rotation[2,:]
 
     def pole(self,timestamp):
         return self.rotation(timestamp)[2,:]
@@ -147,6 +161,8 @@ def propagate_orbital_decay(initial_state,start_time,duration,aerodynamic_proper
         raise DecayUnsupported("Decay duration must be finite, positive and bounded to 90 days")
     if aerodynamic_properties is None:
         raise DecayUnsupported("Explicit aerodynamic properties required; no BSTAR substitution")
+    aerodynamic_properties = ObjectAerodynamicProperties.model_validate(aerodynamic_properties)
+    drag_ratio = aerodynamic_properties.effective_ratio
     if atmosphere is None:
         raise DecayUnsupported("Explicit atmospheric density provider required")
     if not math.isfinite(boundary_altitude_m) or not 80000 <= boundary_altitude_m <= 500000:
@@ -162,6 +178,7 @@ def propagate_orbital_decay(initial_state,start_time,duration,aerodynamic_proper
         raise DecayUnsupported("Initial geodetic altitude must be above configured boundary and at most 1000 km")
     if hasattr(atmosphere,"prepare"):
         atmosphere = atmosphere.prepare(orientation)
+    density_at = getattr(atmosphere,"density_at",None)
     deadline = started+settings.timeout_seconds
 
     def state_at(t,y):
@@ -171,15 +188,21 @@ def propagate_orbital_decay(initial_state,start_time,duration,aerodynamic_proper
     def derivatives(t,y):
         if time.perf_counter() > deadline:
             raise DecayNumericalFailure("Propagation computation budget exhausted; no complete lifetime prediction")
-        state = state_at(t,y)
-        geo = orientation.geodetic(state)
+        if not np.isfinite(y).all():
+            raise DecayNumericalFailure("Nonfinite numerical force state")
+        timestamp = start_time+timedelta(seconds=float(t))
+        geo,pole = orientation.geodetic_and_pole(timestamp,y[:3])
         if not 80000 <= geo.altitude_m <= 1000000:
             raise DecayModelOutOfValidity("Trial state outside 80–1000-km orbital model validity; stop, no ground-impact propagation")
-        rho = atmosphere.density(state)
+        rho = density_at(timestamp,geo) if density_at is not None else atmosphere.density(state_at(t,y))
         if not math.isfinite(rho) or rho < 0:
             raise DecayNumericalFailure("Atmosphere returned nonfinite/negative density")
         central,j2 = gravity_components(y[:3],gravity_pole)
-        return np.concatenate([y[3:],central+j2+acceleration_drag(state,rho,aerodynamic_properties,orientation.pole(state.timestamp))])
+        drag = _drag_from_validated_components(y[:3],y[3:],rho,drag_ratio,pole)
+        derivative = np.concatenate([y[3:],central+j2+drag])
+        if not np.isfinite(derivative).all():
+            raise DecayNumericalFailure("Nonfinite numerical acceleration")
+        return derivative
 
     def boundary_event(t,y):
         return orientation.position_geodetic(start_time+timedelta(seconds=float(t)),y[:3]).altitude_m-boundary_altitude_m
@@ -197,8 +220,10 @@ def propagate_orbital_decay(initial_state,start_time,duration,aerodynamic_proper
     samples = []
     for offset in offsets:
         state = state_at(offset,solution.sol(offset))
-        samples.append(DecaySample(state=state,geodetic=orientation.geodetic(state),
-            density_kg_m3=atmosphere.density(state),**orbital_quantities(state,gravity_pole)))
+        geo = orientation.geodetic(state)
+        rho = density_at(state.timestamp,geo) if density_at is not None else atmosphere.density(state)
+        samples.append(DecaySample(state=state,geodetic=geo,
+            density_kg_m3=rho,**orbital_quantities(state,gravity_pole)))
     return DecayPropagation(status="BOUNDARY_REACHED" if crossing else "PROPAGATED_WITHIN_HORIZON",start_time=start_time,requested_end_time=end,
         integrated_end_time=integrated_end,horizon_days=seconds/86400,samples=samples,
         elapsed_seconds=time.perf_counter()-started,derivative_evaluations=solution.nfev,

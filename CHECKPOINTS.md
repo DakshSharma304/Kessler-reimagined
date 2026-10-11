@@ -350,6 +350,84 @@ Status: FAILED / STOPPED at the first mandatory test failure.
   independent frame/convergence tests. Requires user authorization before
   correcting or rerunning the failed checkpoint. Do not simply raise budget.
 
+## Phase 4 — Checkpoint 10: authorized correction and rerun
+
+Status: PASSED. All ten Phase 4 gates complete.
+
+- User authorized the performance correction with "Ok fix" after the failure
+  diagnosis. The failed run above remains part of the checkpoint record.
+- Each numerical force evaluation now shares one Earth-orientation matrix,
+  one validated geodetic position and its rotation-derived pole. The matrix
+  cache is exact-epoch and read-only, not a changed interpolation scheme.
+  MSIS still runs at every force evaluation; no density interpolation/cache.
+- Aerodynamic parameters are validated once at the integration boundary;
+  the constant effective ratio is reused. A private scalar cross-product
+  kernel avoids generic broadcasting overhead; public drag validation and
+  per-step finite-state/density/acceleration checks remain. UTC forcing is
+  cached per explicit date/three-hour slot, with complete original provenance.
+- Independent new tests: shared geometry/density exactly identical; 200
+  deterministic varied-state drag outputs exactly match NumPy cross product;
+  actual MSIS integration agrees with independently constructed legacy scalar
+  DOP853 at absolute 1e-5 m / 1e-8 m/s. Existing coordinate/force/convergence/
+  boundary/error tests rerun: **53 passed, 1 warning in 6.55 s**, exit **0**.
+- All default settings preserved: rtol1e-9, position atol1e-4 m, velocity
+  atol1e-7 m/s, max step120 s, timeout180 s. No fixture substitution, assertion
+  weakening or scientific reference answers were introduced.
+- Exact failed focused command rerun: **5 passed, 2 warnings in 197.23 s**,
+  exit **0**. All five ran, no skipped/deselected tests. Includes actual GP/
+  MSIS cases A–D, HTTP demonstration, controlled event E, existing live
+  SOCRATES→optimizer→secondary screening→Pc case F and actual CLI subprocess.
+- Successful benchmark initial time **2026-10-11T08:40:37.600652Z**;
+  actual ISS GP epoch **2026-10-10T18:56:31.282080Z**, initial altitude
+  **429,151.012 m**; NOAA15 epoch **2026-10-10T22:27:52.056288Z**, altitude
+  **796,864.893 m**. Properties mass100 kg/area1 m²/Cd2.2 are explicitly
+  hypothetical; this is not modeled actual spacecraft operation.
+- ISS one/seven/thirty-day total service times **4.804103 / 25.367500 /
+  110.148508 s**, propagator **3.203875 / 24.363831 / 108.928555 s**,
+  derivatives **10,862 / 75,662 / 324,062**. All NOT_REACHED_WITHIN_HORIZON;
+  thirty-day total-J2 energy change **−14,321.601139 J/kg**. Instantaneous
+  osculating a increased3,025 m due to J2/sample phase, while first/last
+  period-window sample means changed −2,768.982 m; neither is an observed
+  decay rate. The returned warnings explicitly distinguish these quantities.
+- One-day ISS/NOAA15 energy changes **−703.525453 / −3.668677 J/kg**, initial
+  densities **1.011833e-12 / 1.211141e-14 kg/m³**, both no boundary crossing.
+  Higher-altitude case correctly showed insignificant drag-energy change.
+- Same real orbit/properties, LOW/source-NOMINAL/HIGH one-day energy losses
+  **240.931066 / 703.525453 / 2915.748964 J/kg**, distinct real MSIS densities.
+  Same source weather with doubled hypothetical Cd*A/m=.044 produced
+  **1409.021878 J/kg** loss. Scenario ordering is case-specific, not confidence.
+- One-day refined actual GP/MSIS trajectory differed **0.178230 m** at its
+  final position (<1 m convergence criterion; not a physical accuracy claim).
+  Three-hour controlled refinement remained **4.229284e-5 m**. Boundary event
+  **1310.210038 s**, independent **1310.210035817 s**, tightened solve <.002s.
+- Actual timings: weather cache load/parse **0.706516 s**; 100 MSIS density
+  evaluations **0.005747 s**; 100 direct/prepared coordinate queries
+  **0.536491 / 0.001270 s**; three one-day scenarios **12.415627 s**;
+  actual uvicorn HTTP decay/persistence (.01-day horizon) **1.450458 /
+  0.635269 s**, both HTTP200 and NRLMSIS provenance. Owned server stopped.
+- Existing actual encounter `socrates-f3f9e438db4c8a81fa4b93e5` still optimizer
+  COMPLETE, 13 evaluations; bounded screening INCOMPLETE, 4 considered of
+  19,505 available records. Live covariance Pc UNAVAILABLE_NO_COVARIANCE,
+  MAX_PROB1 remains separate; assumed baseline/postmaneuver Pc unchanged
+  **6.304736762114633e-7 / 5.926506440598308e-7**.
+- README documents inputs, model/version, source coverage, scenario provenance,
+  API/CLI examples, boundary semantics, benchmarks, new modules and limitations.
+  `pip check` exit0/no broken requirements.
+- Final full command, from backend:
+  `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **397 passed, 2 upstream warnings in 529.01 s**, exit **0**; zero failed,
+  skipped or deselected. All 392 previous tests plus five new final/performance
+  tests executed, including the complete real-data benchmarks again. This is
+  all 302 Phase 3 regressions plus 95 Phase 4 tests. No assertion weakening.
+- Warnings remain upstream Starlette/AnyIO deprecation and read-only optional
+  Astropy cache, with installed offline IERS data used. `git diff --check`
+  exit0. No frontend, cleanup ranking/optimization, operational reentry/impact
+  model or replacement of the collision-avoidance simulator was introduced.
+- Completed changes are ready for the standing commit/push workflow only now
+  that the actual final full regression has passed. Remote main was verified
+  still at the expected Phase 3 commit `23aa4c423155d99284f470853e33030a0241e00a`,
+  so publication can be a normal fast-forward, never a force push.
+
 ## Phase 3 verified checkpoints
 
 ## Phase 3 — Checkpoint 1: preserve the existing backend
