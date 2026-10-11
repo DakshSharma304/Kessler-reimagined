@@ -1,5 +1,51 @@
 # Implementation checkpoints
 
+## Phase 3 — Checkpoint 1: preserve the existing backend
+
+## Phase 3 — Checkpoint 2: NASA CDM ingestion
+
+Status: PASSED. Four unmodified KVN CDMs, the NASA README and precise
+reference workbook downloaded from pinned NASA commit
+`ce0f00722c56808755ee0adbe47a4e3d56439484`. Both object states, per-object RTN
+position covariances, EME2000 frame, UTC TCA, explicit km/km/s/m² units,
+combined header HBR and rounded reference Pc verified against actual metadata.
+Unknown metadata (including DCP correlations) is retained. Unsupported frames,
+units, missing covariance/state fields, duplicate fields and non-PSD matrices
+are rejected. Missing optional radius/Pc remains absent, never fabricated.
+Historical source identity is separate from live SOCRATES. Original workbook
+SHA-256: `dcb1f5bf51703ee793582d21b1f669dc388d9eb0b9f4b3871f13055cc885eb85`.
+NASA scripts specify an independent Pc2D benchmark and local linear TCA
+correction; this is not a claim of calibrated risk despite DCP metadata.
+
+- Targeted command: `../.venv/bin/python -m pytest tests/test_probability_cdm.py -v --maxfail=1`:
+  **13 passed in 0.42 s**, exit **0**.
+- Full command: `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **210 passed, 2 warnings in 267.09 s**, exit **0**; all 197 previous tests
+  rerun, including actual source, optimizer, screening, API/CLI and startup.
+
+Status: PASSED (2026-10-11). Phase 3 uses the current task's explicit
+fix-and-retest policy, stopping after three substantial unsuccessful attempts
+on the same blocker; earlier phase failure policies below are historical.
+
+- Baseline commit: `28130d7bc1b76bd2af3d3bb16570b2a59e8615b9`, preserved by
+  Git tag `phase2-before-collision-probability`; initially clean worktree.
+- Inspected state/GP models, frame transforms, encounter search, numerical
+  simulation, clearance optimizer, secondary screening, API, CLI and tests.
+- Reuse SI `StateVector`, actual TEME/GCRS conversions, each object's RTN
+  basis, existing relative-state encounter results and verified simulations.
+  NASA inertial frame labels must not be silently relabeled as GCRS.
+- Ran `cd backend && ../.venv/bin/python -m pytest -v -s --maxfail=1`:
+  **197 passed, 2 upstream warnings in 283.90 s**, exit **0**.
+- Actual SOCRATES ingestion: **195,282 encounters**, zero invalid rows;
+  three actual GP encounter/optimizer/secondary flows passed. Actual API
+  and CLI screening demonstrations passed; uvicorn served actual HTTP health.
+- Available bulk catalog: **19,505** objects, declared partial/stale coverage.
+  Secondary screening correctly returned INCOMPLETE, not a safety guarantee.
+  Broad API/CLI checks each considered 5,518 objects within a 15-second limit.
+- Offline Astropy cache/read-only warning and upstream AnyIO deprecation do
+  not affect successful scientific or startup assertions. No baseline tests
+  skipped or weakened. No Phase 3 implementation preceded this gate.
+
 The user's explicit instruction takes precedence over the pasted task's
 fix-and-continue wording: execute each checkpoint, record actual results,
 and stop on the first failure with evidence and a likely cause.
