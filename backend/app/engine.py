@@ -32,7 +32,6 @@ class Engine:
         self.metadata = MetadataClient(self.cache,http,self.config.metadata_file)
         self.persistence_evidence = OrderedDict()
         self._evidence_lock=threading.Lock()
-        self.calculation_slots=threading.BoundedSemaphore(self.config.max_calculations)
         self._public_catalog = None
         self._public_lock = threading.Lock()
 

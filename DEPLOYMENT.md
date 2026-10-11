@@ -105,10 +105,11 @@ scientific source APIs, but network access is needed for live SOCRATES,
 CelesTrak and space-weather retrieval. Source failures remain visible in the
 UI. NASA CARA fixtures are historical validation cases shipped with the code.
 
-The Python server permits two concurrent expensive calculations per process;
-Modal accepts up to eight HTTP inputs in its single container. Requests can
-return 429 BUSY or a source/numerical status. The frontend reports those states
-and uses a 240-second client timeout; an upstream proxy may impose a shorter
-limit. Long or high-cost analyses need an explicit future job workflow rather
+The application has no explicit per-process calculation slot limit. Modal still
+accepts up to eight concurrent HTTP inputs in its single container; runtime
+resources and upstream proxies remain finite. Source/numerical errors remain
+possible, including `503 UNAVAILABLE` when required orbital data cannot be
+retrieved. The frontend uses a 240-second client timeout; an upstream proxy
+may impose a shorter limit. Long or high-cost analyses need an explicit future job workflow rather
 than an implied progress percentage. UI decay horizons are bounded to one day,
 while the backend supports a larger validated range.

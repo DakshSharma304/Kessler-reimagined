@@ -39,7 +39,6 @@ automatically loaded; no dotenv dependency):
 | KESSLER_DATA_DIR | data; base for configured relative dataset filenames |
 | KESSLER_CATALOG_FILES | JSON array of actual OMM files; when nonempty browser uses this explicitly local scope instead of downloading public groups |
 | KESSLER_METADATA_FILE | Optional documented SATCAT CSV; LOCAL/offline provenance, not live classification |
-| KESSLER_MAX_CALCULATIONS | 2 concurrent expensive calculations; configurable1..8 |
 
 Production example (replace the public hostname with your actual frontend origin):
 
@@ -212,8 +211,8 @@ long-term collision frequency. Additive proxy is never collisions prevented.
 -422: either `{status:UNSUPPORTED,detail:string}` scientific error or FastAPI
   `{detail:[{loc,msg,type,input?,ctx?}]}` input validation. Both shapes are
   explicitly in OpenAPI. Do not read a Pc/trajectory from failed requests.
--429 BUSY: configured concurrent scientific capacity reached; show waiting and
-  retry with backoff. No job ID, async job infrastructure or queued calculation.
+-The application no longer issues `429 BUSY` for concurrent calculations.
+  Reverse proxies or hosting platforms may still impose their own limits.
 -503 UNAVAILABLE: required live source/orbital/weather data unavailable.
   Catalog/cleanup can instead return explicit unavailable/partial status200
   with null fields, warnings and failed_sources; inspect calculation status.
@@ -2429,7 +2428,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### GET /api/status
 
@@ -2442,7 +2440,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### GET /api/catalog/status
 
@@ -2455,7 +2452,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### GET /api/encounters
 
@@ -2475,7 +2471,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### GET /api/encounters/{encounter_id}
 
@@ -2489,7 +2484,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### POST /api/probability/calculate
 
@@ -2503,7 +2497,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### POST /api/encounters/{encounter_id}/analyze
 
@@ -2518,7 +2511,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### POST /api/encounters/{encounter_id}/simulate
 
@@ -2533,7 +2525,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### POST /api/encounters/{encounter_id}/optimize
 
@@ -2548,7 +2539,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### POST /api/encounters/{encounter_id}/screen
 
@@ -2563,7 +2553,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### GET /api/objects/{object_id}
 
@@ -2577,7 +2566,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### GET /api/space-weather/status
 
@@ -2591,7 +2579,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### POST /api/atmosphere/density
 
@@ -2605,7 +2592,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### POST /api/objects/{object_id}/decay
 
@@ -2620,7 +2606,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### POST /api/objects/{object_id}/persistence
 
@@ -2635,7 +2620,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### GET /api/objects
 
@@ -2652,7 +2636,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### POST /api/positions
 
@@ -2666,7 +2649,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### GET /api/objects/{object_id}/metadata
 
@@ -2680,7 +2662,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### GET /api/objects/{object_id}/trajectory
 
@@ -2697,7 +2678,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### GET /api/encounters/{encounter_id}/trajectories
 
@@ -2713,7 +2693,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### POST /api/encounters/{encounter_id}/trajectories
 
@@ -2728,7 +2707,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### POST /api/cleanup/optimize
 
@@ -2742,7 +2720,6 @@ Responses:
 - HTTP422: ScientificErrorResponse \| ValidationFailure
 - HTTP404: ScientificErrorResponse
 - HTTP503: ScientificErrorResponse
-- HTTP429: ScientificErrorResponse
 
 ### Schema: AnalyzeRequest
 
@@ -3774,7 +3751,7 @@ Responses:
 
 | Field | Required | Type / constraints | Default |
 | --- | --- | --- | --- |
-| status | True | `NOT_FOUND`, `UNAVAILABLE`, `UNSUPPORTED`, `BUSY` | — |
+| status | True | `NOT_FOUND`, `UNAVAILABLE`, `UNSUPPORTED` | — |
 | detail | True | string | — |
 
 ### Schema: ScreenRequest

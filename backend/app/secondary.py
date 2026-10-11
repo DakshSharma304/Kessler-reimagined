@@ -59,6 +59,10 @@ def screen_proposed_maneuver(encounter, first, second, request: ScreeningRequest
     result.elapsed_seconds=time.perf_counter()-started
     result.timings_seconds["trajectory_generation"]=max(0,result.elapsed_seconds-sum(result.timings_seconds.values()))
     result.warnings.append(f"Primary trajectory uses selected GP record {orbit.elements.object_id}, epoch {orbit.elements.epoch.isoformat()}, SHA-256 {orbit.content_sha256}; it may differ from a same-ID bulk-catalog record, which is excluded from self-comparison.")
+    old_epochs=sum(any(abs((endpoint-record.elements.epoch).total_seconds())>request.max_epoch_distance_days*86400
+        for endpoint in (window.start,window.end)) for record in catalog.records.values())
+    if old_epochs:
+        result.warnings.append(f"{old_epochs} screened objects exceeded the {request.max_epoch_distance_days:g}-day GP accuracy caution threshold; their screening geometry may be unreliable.")
     screening_counterpart=catalog.records.get(counterpart.elements.object_id)
     if screening_counterpart is not None and screening_counterpart.elements != counterpart.elements:
         result.warnings.append(f"Original counterpart's catalog elements differ from the selected primary-analysis record: catalog SHA-256 {screening_counterpart.content_sha256}, epoch {screening_counterpart.elements.epoch.isoformat()}; selected SHA-256 {counterpart.content_sha256}, epoch {counterpart.elements.epoch.isoformat()}. Original-encounter screening distances must not be equated with primary-optimizer distances.")

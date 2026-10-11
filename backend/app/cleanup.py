@@ -64,8 +64,6 @@ def build_candidates(records,metadata,dataset,persistence=None,now=None):
     for identifier,orbit in sorted(unique.items(),key=lambda item:int(item[0])):
         meta = None if metadata is None else metadata.records.get(identifier)
         reason = "No reliable object-type metadata; classification unknown" if meta is None else meta.eligibility_reason
-        if abs((now-orbit.elements.epoch).total_seconds()) > 7*86400:
-            reason = "GP epoch exceeds the seven-day current-assessment limit"
         evidence = persistence.get(identifier)
         if evidence is not None and abs((now-evidence.initial_epoch).total_seconds()) > 86400:
             evidence = None
@@ -87,7 +85,9 @@ def build_candidates(records,metadata,dataset,persistence=None,now=None):
             missing_data=["mass_kg","dimensions_m","aerodynamic_area_m2"]+(["persistence"] if evidence is None else [])+(["radar_cross_section_m2"] if rcs is None else []),
             provenance={"gp_url":orbit.source_url,"gp_sha256":orbit.content_sha256,"gp_fetched_at":orbit.fetched_at.isoformat(),
                 "gp_data_status":orbit.data_status,"object_type":None if meta is None else meta.model_dump(mode="json")},
-            warnings=[*orbit.warnings,"Removal feasibility, physical properties and mission costs are not established."] ))
+            warnings=[*orbit.warnings,*(["GP epoch exceeds seven-day accuracy caution threshold; priority evidence may be unreliable."]
+                if abs((now-orbit.elements.epoch).total_seconds())>7*86400 else []),
+                "Removal feasibility, physical properties and mission costs are not established."] ))
     return result,coverage
 
 

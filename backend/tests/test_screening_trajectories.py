@@ -85,7 +85,6 @@ def test_invalid_queries_frames_and_epoch_limits_rejected():
         curve.modified(curve.window.start-timedelta(seconds=1))
     with pytest.raises(ValueError):
         trajectory(reference_epoch=curve.burn_time+timedelta(seconds=1))
-    with pytest.raises(ValueError):
-        trajectory(max_epoch_distance_days=.01)
+    assert trajectory(max_epoch_distance_days=.01).nominal(curve.burn_time).frame=='TEME'
     with pytest.raises(ValueError):
         transform_states([curve.nominal(curve.burn_time)],"ITRS")

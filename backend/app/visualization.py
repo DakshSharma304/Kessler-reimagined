@@ -29,11 +29,10 @@ def metadata_for(engine):
 def summary(record,metadata):
     elements=record.elements
     meta=None if metadata is None else metadata.records.get(elements.object_id)
-    current=abs((datetime.now(UTC)-elements.epoch).total_seconds())<=7*86400
     return ObjectSummary(id=elements.object_id,name=elements.object_name,
         classification='UNKNOWN' if meta is None else meta.classification,element_epoch=elements.epoch,
         inclination_deg=elements.inclination_deg,operational_status_code=None if meta is None else meta.operational_status_code,
-        cleanup_eligible=meta is not None and meta.eligibility_reason is None and current,
+        cleanup_eligible=meta is not None and meta.eligibility_reason is None,
         apogee_km=None if meta is None else meta.apogee_km,perigee_km=None if meta is None else meta.perigee_km)
 
 
@@ -82,7 +81,7 @@ def bulk_positions(engine,request):
     at=(request.epoch or datetime.now(UTC)).astimezone(UTC)
     catalog=engine.public_catalog()
     metadata,warnings=metadata_for(engine)
-    items=[]; satellites=[]; indices=[]
+    items=[]; satellites=[]; indices=[]; old_epochs=0
     for identifier in request.object_ids:
         record=catalog.records.get(identifier)
         meta=None if metadata is None else metadata.records.get(identifier)
@@ -90,12 +89,12 @@ def bulk_positions(engine,request):
             classification='UNKNOWN' if meta is None else meta.classification,epoch=at,position_km=None,
             propagation_status='NOT_IN_CATALOG',error='Object not present in selected public snapshot')
         if record is not None:
-            suitable,notes=epoch_suitability(record,at)
-            if not suitable: item.propagation_status='UNSUPPORTED_EPOCH';item.error=notes[-1]
-            else:
-                try:
-                    satellites.append(initialized_satellite(record.elements));indices.append(len(items))
-                except ValueError as error: item.propagation_status='SGP4_ERROR';item.error=str(error)
+            _,notes=epoch_suitability(record,at)
+            if any('accuracy caution threshold' in note for note in notes):
+                old_epochs+=1
+            try:
+                satellites.append(initialized_satellite(record.elements));indices.append(len(items))
+            except ValueError as error: item.propagation_status='SGP4_ERROR';item.error=str(error)
         items.append(item)
     if satellites:
         jd,fr=julian(at)
@@ -110,12 +109,13 @@ def bulk_positions(engine,request):
         for index,point in zip(good,transformed):
             items[index].position_km=tuple(point);items[index].propagation_status='OK';items[index].error=None
     return PositionBatch(items=items,epoch=at,catalog=catalog.metadata,
-        metadata_source=None if metadata is None else metadata.provenance,warnings=[*warnings,*FRAME_WARNINGS])
+        metadata_source=None if metadata is None else metadata.provenance,warnings=[*warnings,*FRAME_WARNINGS,
+            *([f'{old_epochs} objects have GP epochs more than seven days from the requested time; positions were evaluated but may be unreliable.'] if old_epochs else [])])
 
 
 def times_between(start,end,count):
-    if start.tzinfo is None or end.tzinfo is None or not 0<(end-start).total_seconds()<=86400 or not 2<=count<=1001:
-        raise ValueError('Aware increasing UTC times, interval <=24 hours and 2..1001 samples required')
+    if start.tzinfo is None or end.tzinfo is None or not 0<(end-start).total_seconds()<=86400 or count<2:
+        raise ValueError('Aware increasing UTC times, interval <=24 hours and at least 2 samples required')
     return [start.astimezone(UTC)+timedelta(seconds=float(t)) for t in np.linspace(0,(end-start).total_seconds(),count)]
 
 
@@ -123,7 +123,6 @@ def sgp4_trajectory(record,start,end,count):
     times=times_between(start,end,count)
     suitable,notes=epoch_suitability(record,start)
     suitable_end,end_notes=epoch_suitability(record,end)
-    if not suitable or not suitable_end: raise ValueError('Trajectory endpoints exceed seven-day GP epoch limit')
     satellite=initialized_satellite(record.elements)
     jd,fr=np.array([julian(at) for at in times]).T
     errors,positions,_=satellite.sgp4_array(np.ascontiguousarray(jd),np.ascontiguousarray(fr))
@@ -171,7 +170,6 @@ def maneuver_trajectories(engine,identifier,request):
     anchor=request.numerical_reference_epoch or request.maneuver_time
     if not encounter.time_of_closest_approach-timedelta(hours=48)<=anchor<=request.maneuver_time:
         raise ValueError('Reference epoch must precede/equal burn and be within the 48-hour encounter model')
-    if any(not epoch_suitability(r,anchor)[0] for r in (first,second)): raise ValueError('Reference GP epoch unsupported')
     dynamics=MatchedDynamics(*case,anchor,reference)
     simulation=simulate_maneuver(*case,request.maneuvering_object_id,request.maneuver_time,
         request.delta_v_rtn_m_s,request.hypothetical_capability_assumed,analysis=reference,shared_dynamics=dynamics,trajectory_samples=0)

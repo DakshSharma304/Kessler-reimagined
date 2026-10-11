@@ -52,11 +52,11 @@ class ScreeningSettings(BaseModel):
     coarse_step_seconds: float = Field(default=30, gt=0, le=120)
     relative_acceleration_margin_m_s2: float = Field(default=40, gt=0, le=1000,
         description="Broad-phase curvature allowance; heuristic, not a proven completeness bound")
-    batch_size: int = Field(default=256, ge=1, le=1024)
-    max_objects: int = Field(default=50000, ge=1, le=100000)
-    max_refinements: int = Field(default=1000, ge=1, le=10000)
-    timeout_seconds: float = Field(default=30, gt=0, le=300)
-    max_epoch_distance_days: float = Field(default=7, gt=0, le=7)
+    batch_size: int = Field(default=256, ge=1)
+    max_objects: int = Field(default=50000, ge=1)
+    max_refinements: int = Field(default=1000, ge=1)
+    timeout_seconds: float = Field(default=30, gt=0)
+    max_epoch_distance_days: float = Field(default=7, gt=0)
     classification_tolerance_m: float = Field(default=1, ge=.001, le=100,
         description="Numerical classification tolerance, not physical uncertainty")
     event_matching_tolerance_seconds: float = Field(default=120, ge=1, le=600)
@@ -170,8 +170,8 @@ class ScreeningResult(BaseModel):
 
 class SecondaryOptimizationSettings(ScreeningSettings):
     policy: ScreeningPolicy = ScreeningPolicy.REPORT_ONLY
-    max_finalists: int = Field(default=3, ge=1, le=10)
-    total_timeout_seconds: float = Field(default=90, gt=0, le=600)
+    max_finalists: int = Field(default=3, ge=1)
+    total_timeout_seconds: float = Field(default=90, gt=0)
 
 
 class CandidateScreeningAssessment(BaseModel):

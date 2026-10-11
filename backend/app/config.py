@@ -20,12 +20,10 @@ class Settings:
     allowed_origins: tuple[str,...] = ('http://localhost:5173','http://127.0.0.1:5173','http://localhost:3000','http://127.0.0.1:3000')
     host: str = '127.0.0.1'
     port: int = 8000
-    max_calculations: int = 2
 
     def __post_init__(self):
         if not isinstance(self.port,int) or isinstance(self.port,bool) or not 1<=self.port<=65535:
             raise ValueError('KESSLER_PORT must be an integer in 1..65535')
-        if not 1<=self.max_calculations<=8: raise ValueError('KESSLER_MAX_CALCULATIONS must be in 1..8')
         try: ipaddress.ip_address(self.host)
         except ValueError:
             if not re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9.\-]{0,252}',self.host):
@@ -56,8 +54,7 @@ class Settings:
             catalog_files=tuple(data_path(v) for v in array('KESSLER_CATALOG_FILES',[])),
             metadata_file=data_path(os.environ['KESSLER_METADATA_FILE']) if os.environ.get('KESSLER_METADATA_FILE') else None,
             allowed_origins=tuple(array('KESSLER_ALLOWED_ORIGINS',origins)),
-            host=os.environ.get('KESSLER_HOST','127.0.0.1'),port=int(os.environ.get('KESSLER_PORT','8000')),
-            max_calculations=int(os.environ.get('KESSLER_MAX_CALCULATIONS','2')))
+            host=os.environ.get('KESSLER_HOST','127.0.0.1'),port=int(os.environ.get('KESSLER_PORT','8000')))
 
 
 settings = Settings.from_environment()

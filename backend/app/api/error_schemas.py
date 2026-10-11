@@ -3,7 +3,7 @@ from typing import Any,Literal
 from pydantic import BaseModel,ConfigDict
 
 class ScientificErrorResponse(BaseModel):
-    status: Literal['NOT_FOUND','UNAVAILABLE','UNSUPPORTED','BUSY']
+    status: Literal['NOT_FOUND','UNAVAILABLE','UNSUPPORTED']
     detail: str
 
 class ValidationIssue(BaseModel):
@@ -18,4 +18,4 @@ class ValidationFailure(BaseModel):
     detail: list[ValidationIssue]
 
 ERROR_RESPONSES={422:{'model':ScientificErrorResponse | ValidationFailure},
-    404:{'model':ScientificErrorResponse},503:{'model':ScientificErrorResponse},429:{'model':ScientificErrorResponse}}
+    404:{'model':ScientificErrorResponse},503:{'model':ScientificErrorResponse}}

@@ -71,10 +71,14 @@ def test_default_age_screening_is_transparent(discovery):
     assert any("not calibrated" in warning for warning in quality_warnings(items[0]))
 
 
-@pytest.mark.parametrize("kwargs", [{"sort": "danger"}, {"limit": 0}, {"limit": 1001}, {"object_id": "abc"}])
+@pytest.mark.parametrize("kwargs", [{"sort": "danger"}, {"limit": 0}, {"offset": -1}, {"object_id": "abc"}])
 def test_invalid_filter_rejected(discovery, kwargs):
     with pytest.raises(ValueError):
         discovery.list_encounters(now=NOW, **kwargs)
+
+
+def test_large_limit_is_allowed(discovery):
+    assert len(discovery.list_encounters(now=NOW, limit=1001)) == 5
 
 
 @pytest.mark.live

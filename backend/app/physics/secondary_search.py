@@ -133,8 +133,6 @@ def screen_trajectory_against_catalog(trajectory: TrajectoryView,
     refinement_count = 0
     if not records:
         return SearchReport([],None,screened,refined,skipped,True,0,timings)
-    if count > 10001:
-        return SearchReport([],None,screened,refined,{key:"Time-grid workload exceeds 10,001 samples" for key in records},False,0,timings)
     offsets = np.linspace(0,duration,count)
     timestamps = [window.start+timedelta(seconds=float(offset)) for offset in offsets]
     tick = time.perf_counter()
@@ -147,10 +145,6 @@ def screen_trajectory_against_catalog(trajectory: TrajectoryView,
             skipped[identifier] = "Object workload limit reached"
             continue
         if isinstance(orbit,OrbitalRecord):
-            age = max(abs((endpoint-orbit.elements.epoch).total_seconds()) for endpoint in (window.start,window.end))
-            if age > screening_settings.max_epoch_distance_days*86400:
-                skipped[identifier] = "Element epoch outside validity at a screening endpoint"
-                continue
             if orbit.data_status == "STALE_CACHE":
                 skipped[identifier] = "Source refresh failed; stale cache not silently accepted as current"
                 continue

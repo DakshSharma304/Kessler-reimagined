@@ -17,13 +17,10 @@ from app.physics.maneuvers import ManeuverError
 from app.physics.propagation import PropagationError
 
 from app.api.cleanup_routes import router as cleanup_router
-from app.api.limits import CalculationBusy
 
 
 async def scientific_error(_request, error):
-    if isinstance(error,CalculationBusy):
-        code,status=429,'BUSY'
-    elif isinstance(error, EncounterNotFound):
+    if isinstance(error, EncounterNotFound):
         code, status = 404, "NOT_FOUND"
     elif isinstance(error, (SourceUnavailable, OrbitalUnavailable,SpaceWeatherUnavailable)):
         code, status = 503, "UNAVAILABLE"
@@ -42,7 +39,7 @@ def create_app(config=None):
     application.include_router(visualization_router)
     application.include_router(cleanup_router)
     for error_type in (EncounterNotFound, SourceUnavailable, OrbitalUnavailable,
-        CalculationUnavailable,ManeuverError,PropagationError,ValueError,SpaceWeatherUnavailable,CalculationBusy):
+        CalculationUnavailable,ManeuverError,PropagationError,ValueError,SpaceWeatherUnavailable):
         application.add_exception_handler(error_type,scientific_error)
     return application
 

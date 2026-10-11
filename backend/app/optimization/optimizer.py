@@ -20,11 +20,11 @@ from app.physics.propagation import PropagationError
 
 class SearchSettings(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
-    time_samples: int = Field(default=6, ge=1, le=8)
-    magnitude_samples: int = Field(default=3, ge=1, le=5)
-    max_evaluations: int = Field(default=150, ge=1, le=500)
-    timeout_seconds: float = Field(default=25, gt=0, le=120)
-    refinement_evaluations: int = Field(default=20, ge=0, le=60)
+    time_samples: int = Field(default=6, ge=1)
+    magnitude_samples: int = Field(default=3, ge=1)
+    max_evaluations: int = Field(default=150, ge=1)
+    timeout_seconds: float = Field(default=25, gt=0)
+    refinement_evaluations: int = Field(default=20, ge=0)
 
 
 class ManeuverOption(BaseModel):

@@ -53,9 +53,6 @@ class DifferentialTrajectory:
             raise ValueError("Numerical reference must be aware and no later than the burn")
         if (window.end-self.reference_epoch).total_seconds() > 48*3600:
             raise ValueError("Differential numerical propagation is limited to 48 hours")
-        for endpoint in (self.reference_epoch, window.end):
-            if abs((endpoint-orbit.elements.epoch).total_seconds()) > max_epoch_distance_days*86400:
-                raise ValueError("Primary orbital epoch is outside the screening validity limit")
         delta = np.asarray(delta_v_rtn_m_s, dtype=float)
         if delta.shape != (3,) or not np.isfinite(delta).all():
             raise ValueError("Impulse requires three finite RTN components")

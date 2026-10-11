@@ -81,6 +81,5 @@ def epoch_suitability(record: OrbitalRecord, tca: datetime,
         *record.warnings,
     ]
     if age > max_epoch_distance_days:
-        warnings.append(f"Element epoch is {age:.3f} days from TCA; exceeds the conservative {max_epoch_distance_days:g}-day modeling limit.")
-        return False, warnings
+        warnings.append(f"Element epoch is {age:.3f} days from TCA; exceeds the conservative {max_epoch_distance_days:g}-day accuracy caution threshold. SGP4 can be evaluated, but the result may be unreliable and is not a current-quality assessment.")
     return True, warnings

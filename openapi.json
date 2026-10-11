@@ -5185,8 +5185,7 @@
             "enum": [
               "NOT_FOUND",
               "UNAVAILABLE",
-              "UNSUPPORTED",
-              "BUSY"
+              "UNSUPPORTED"
             ],
             "title": "Status",
             "type": "string"
@@ -6416,16 +6415,6 @@
             },
             "description": "Unprocessable Entity"
           },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
-          },
           "503": {
             "content": {
               "application/json": {
@@ -6481,16 +6470,6 @@
               }
             },
             "description": "Unprocessable Entity"
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
           },
           "503": {
             "content": {
@@ -6557,16 +6536,6 @@
               }
             },
             "description": "Unprocessable Entity"
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
           },
           "503": {
             "content": {
@@ -6732,16 +6701,6 @@
             },
             "description": "Unprocessable Entity"
           },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
-          },
           "503": {
             "content": {
               "application/json": {
@@ -6808,16 +6767,6 @@
               }
             },
             "description": "Unprocessable Entity"
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
           },
           "503": {
             "content": {
@@ -6911,16 +6860,6 @@
             },
             "description": "Unprocessable Entity"
           },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
-          },
           "503": {
             "content": {
               "application/json": {
@@ -6998,16 +6937,6 @@
             },
             "description": "Unprocessable Entity"
           },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
-          },
           "503": {
             "content": {
               "application/json": {
@@ -7084,16 +7013,6 @@
               }
             },
             "description": "Unprocessable Entity"
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
           },
           "503": {
             "content": {
@@ -7179,16 +7098,6 @@
               }
             },
             "description": "Unprocessable Entity"
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
           },
           "503": {
             "content": {
@@ -7281,16 +7190,6 @@
             },
             "description": "Unprocessable Entity"
           },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
-          },
           "503": {
             "content": {
               "application/json": {
@@ -7366,16 +7265,6 @@
             },
             "description": "Unprocessable Entity"
           },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
-          },
           "503": {
             "content": {
               "application/json": {
@@ -7431,16 +7320,6 @@
               }
             },
             "description": "Unprocessable Entity"
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
           },
           "503": {
             "content": {
@@ -7563,16 +7442,6 @@
             },
             "description": "Unprocessable Entity"
           },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
-          },
           "503": {
             "content": {
               "application/json": {
@@ -7639,16 +7508,6 @@
               }
             },
             "description": "Unprocessable Entity"
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
           },
           "503": {
             "content": {
@@ -7735,16 +7594,6 @@
             },
             "description": "Unprocessable Entity"
           },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
-          },
           "503": {
             "content": {
               "application/json": {
@@ -7811,16 +7660,6 @@
               }
             },
             "description": "Unprocessable Entity"
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
           },
           "503": {
             "content": {
@@ -7906,16 +7745,6 @@
               }
             },
             "description": "Unprocessable Entity"
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
           },
           "503": {
             "content": {
@@ -8030,16 +7859,6 @@
             },
             "description": "Unprocessable Entity"
           },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
-          },
           "503": {
             "content": {
               "application/json": {
@@ -8105,16 +7924,6 @@
               }
             },
             "description": "Unprocessable Entity"
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
           },
           "503": {
             "content": {
@@ -8198,16 +8007,6 @@
             },
             "description": "Unprocessable Entity"
           },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
-          },
           "503": {
             "content": {
               "application/json": {
@@ -8276,16 +8075,6 @@
             },
             "description": "Unprocessable Entity"
           },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
-          },
           "503": {
             "content": {
               "application/json": {
@@ -8341,16 +8130,6 @@
               }
             },
             "description": "Unprocessable Entity"
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ScientificErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
           },
           "503": {
             "content": {

@@ -85,5 +85,6 @@ and response metadata disclose scope. Trajectory/persistence visualization
 payloads stay bounded; atmospheric calculations never run on ordinary browsing.
 First source downloads/GP parsing/Astropy initialization can take seconds or
 tens of seconds. Long optimization/screening/persistence requests are synchronous;
-show waiting, permit adequate timeouts, handle429 BUSY without claiming success.
-No elaborate job infrastructure or unbounded computation queue was added.
+show waiting and permit adequate timeouts. The application no longer rejects
+calculations at a fixed concurrent slot count; too many simultaneous requests
+can exhaust local CPU/RAM or hit hosting limits. No job infrastructure was added.

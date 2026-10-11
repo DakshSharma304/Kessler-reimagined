@@ -2381,7 +2381,7 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "NOT_FOUND" | "UNAVAILABLE" | "UNSUPPORTED" | "BUSY";
+            status: "NOT_FOUND" | "UNAVAILABLE" | "UNSUPPORTED";
         };
         /** ScreenRequest */
         ScreenRequest: {
@@ -2979,15 +2979,6 @@ export interface operations {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
                 };
             };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
-                };
-            };
             /** @description Service Unavailable */
             503: {
                 headers: {
@@ -3033,15 +3024,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
-                };
-            };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
                 };
             };
             /** @description Service Unavailable */
@@ -3093,15 +3075,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
-                };
-            };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
                 };
             };
             /** @description Service Unavailable */
@@ -3159,15 +3132,6 @@ export interface operations {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
                 };
             };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
-                };
-            };
             /** @description Service Unavailable */
             503: {
                 headers: {
@@ -3215,15 +3179,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
-                };
-            };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
                 };
             };
             /** @description Service Unavailable */
@@ -3279,15 +3234,6 @@ export interface operations {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
                 };
             };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
-                };
-            };
             /** @description Service Unavailable */
             503: {
                 headers: {
@@ -3339,15 +3285,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
-                };
-            };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
                 };
             };
             /** @description Service Unavailable */
@@ -3403,15 +3340,6 @@ export interface operations {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
                 };
             };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
-                };
-            };
             /** @description Service Unavailable */
             503: {
                 headers: {
@@ -3465,15 +3393,6 @@ export interface operations {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
                 };
             };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
-                };
-            };
             /** @description Service Unavailable */
             503: {
                 headers: {
@@ -3524,15 +3443,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
-                };
-            };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
                 };
             };
             /** @description Service Unavailable */
@@ -3588,15 +3498,6 @@ export interface operations {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
                 };
             };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
-                };
-            };
             /** @description Service Unavailable */
             503: {
                 headers: {
@@ -3642,15 +3543,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
-                };
-            };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
                 };
             };
             /** @description Service Unavailable */
@@ -3705,15 +3597,6 @@ export interface operations {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
                 };
             };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
-                };
-            };
             /** @description Service Unavailable */
             503: {
                 headers: {
@@ -3761,15 +3644,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
-                };
-            };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
                 };
             };
             /** @description Service Unavailable */
@@ -3825,15 +3699,6 @@ export interface operations {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
                 };
             };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
-                };
-            };
             /** @description Service Unavailable */
             503: {
                 headers: {
@@ -3881,15 +3746,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
-                };
-            };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
                 };
             };
             /** @description Service Unavailable */
@@ -3945,15 +3801,6 @@ export interface operations {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
                 };
             };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
-                };
-            };
             /** @description Service Unavailable */
             503: {
                 headers: {
@@ -4007,15 +3854,6 @@ export interface operations {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
                 };
             };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
-                };
-            };
             /** @description Service Unavailable */
             503: {
                 headers: {
@@ -4065,15 +3903,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
-                };
-            };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
                 };
             };
             /** @description Service Unavailable */
@@ -4127,15 +3956,6 @@ export interface operations {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
                 };
             };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
-                };
-            };
             /** @description Service Unavailable */
             503: {
                 headers: {
@@ -4185,15 +4005,6 @@ export interface operations {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
                 };
             };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
-                };
-            };
             /** @description Service Unavailable */
             503: {
                 headers: {
@@ -4239,15 +4050,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScientificErrorResponse"] | components["schemas"]["ValidationFailure"];
-                };
-            };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ScientificErrorResponse"];
                 };
             };
             /** @description Service Unavailable */

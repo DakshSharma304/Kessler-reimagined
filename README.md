@@ -85,7 +85,8 @@ Environment configuration (not automatically loaded from `.env`):
 `KESSLER_CATALOG_FILES` (JSON array of actual local OMM paths),
 `KESSLER_METADATA_FILE` (optional SATCAT CSV), `KESSLER_ALLOWED_ORIGINS`
 (JSON array of exact HTTP(S) origins), `KESSLER_ENV=production` and
-`KESSLER_MAX_CALCULATIONS` (default2, range1..8). See `backend/.env.example`.
+See `backend/.env.example`. The application does not impose a concurrent
+calculation slot limit; local and hosting resources remain finite.
 Production defaults to no browser origins; configure the actual frontend
 origin. Local defaults permit localhost/127.0.0.1 on ports5173/3000.
 No authentication: CORS is not access control. Paths are configurable; no
@@ -119,7 +120,9 @@ Lifetimes are censored when the boundary is not reached. Ordinary browsing
 performs no atmospheric propagation. No verified fully offline six-workflow
 server mode exists: genuine local/NASA fixtures support component development
 and are labeled historical/offline, not live. Expensive calls are bounded,
-synchronous: show waiting, handle429 BUSY and configure request/proxy timeouts.
+synchronous: show waiting and configure request/proxy timeouts. The application
+does not issue `429 BUSY` for a concurrent-calculation slot; external hosting
+limits and `503 UNAVAILABLE` source failures remain possible.
 
 ## Install
 

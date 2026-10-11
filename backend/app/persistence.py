@@ -78,8 +78,6 @@ def analyze_orbital_persistence(object_id,properties,settings: PersistenceSettin
     start = start_time or datetime.now(UTC)
     record = engine.celestrak.get_object(object_id)
     suitable,warnings = epoch_suitability(record,start)
-    if not suitable:
-        raise ValueError("Initial GP epoch is outside the supported seven-day initial-state window")
     state = teme_to_gcrs(propagate_object(record,start))
     pole = earth_pole_gcrs(start)
     initial = orbital_quantities(state,pole)

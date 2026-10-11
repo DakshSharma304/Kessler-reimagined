@@ -1,5 +1,6 @@
 """All six workflows execute the existing real scientific services via HTTP."""
 from datetime import timedelta
+from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
 import numpy as np
@@ -92,15 +93,19 @@ def test_no_data_invalid_inputs_and_calculation_errors(visual_api):
     assert page==listed[1:2]
     assert successful(client.get('/api/encounters',params={'end_time':START.isoformat()}))['items']==[]
     assert client.post('/api/probability/calculate',json={'reference_case':'invalid','independent_benchmark':True}).status_code==422
-    # Capacity rejection is explicit and releases after both errors and success.
-    for _ in range(engine.config.max_calculations): assert engine.calculation_slots.acquire(blocking=False)
-    try:
-        busy=client.post('/api/cleanup/optimize',json={})
-        assert busy.status_code==429 and busy.json()['status']=='BUSY'
-        assert client.get('/api/health').status_code==200
-    finally:
-        for _ in range(engine.config.max_calculations): engine.calculation_slots.release()
     assert client.post('/api/cleanup/optimize',json={'candidate_ids':['34452']}).status_code==200
+
+def test_three_concurrent_real_analyses_have_no_application_capacity_rejection(visual_api):
+    client,_=visual_api
+    identifier=successful(client.get('/api/encounters'))['items'][0]['id']
+    def analyze():
+        return client.post(f'/api/encounters/{identifier}/analyze',json={'probability_analysis':True})
+    with ThreadPoolExecutor(max_workers=3) as workers:
+        responses=list(workers.map(lambda _: analyze(),range(3)))
+    results=[successful(response) for response in responses]
+    misses=[result['calculated']['miss_distance_m'] for result in results]
+    assert all(np.isfinite(value) and value>0 for value in misses)
+    assert misses==pytest.approx([misses[0]]*3,abs=1e-6)
 
 def test_cors_config_and_local_real_data_paths(tmp_path,monkeypatch):
     config=Settings(cache_directory=tmp_path/'cache',data_directory=FIXTURES,
@@ -123,7 +128,7 @@ def test_cors_config_and_local_real_data_paths(tmp_path,monkeypatch):
     assert Settings.from_environment().catalog_files==(FIXTURES/'gp_actual.json',)
 
 @pytest.mark.parametrize('variable,value',[
-    ('KESSLER_PORT','0'),('KESSLER_HOST','http://localhost'),('KESSLER_MAX_CALCULATIONS','100'),
+    ('KESSLER_PORT','0'),('KESSLER_HOST','http://localhost'),
     ('KESSLER_ALLOWED_ORIGINS','["*"]'),('KESSLER_ALLOWED_ORIGINS','["https://example.com/path"]'),
     ('KESSLER_ALLOWED_ORIGINS','oops'),('KESSLER_CATALOG_FILES','["absent.json"]')])
 def test_invalid_environment_fails_clearly(monkeypatch,variable,value):

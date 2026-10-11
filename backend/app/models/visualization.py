@@ -42,14 +42,14 @@ class ObjectInfo(BaseModel):
 
 class PositionRequest(BaseModel):
     model_config = ConfigDict(extra='forbid',allow_inf_nan=False)
-    object_ids: list[str] = Field(min_length=1,max_length=2000)
+    object_ids: list[str] = Field(min_length=1)
     epoch: AwareDatetime | None = None
 
     @field_validator('object_ids',mode='before')
     @classmethod
     def canonical_ids(cls,values):
-        if not isinstance(values,(list,tuple)) or not 1<=len(values)<=2000:
-            raise ValueError('Supply 1..2000 IDs before deduplication')
+        if not isinstance(values,(list,tuple)) or not values:
+            raise ValueError('Supply at least one ID before deduplication')
         return list(dict.fromkeys(validate_object_id(value) for value in values))
 
 
@@ -98,7 +98,7 @@ class EncounterTrajectories(BaseModel):
 
 
 class ManeuverTrajectoryRequest(SimulateRequest):
-    sample_count: int = Field(default=121,ge=2,le=1001)
+    sample_count: int = Field(default=121,ge=2)
     numerical_reference_epoch: AwareDatetime | None = None
 
 

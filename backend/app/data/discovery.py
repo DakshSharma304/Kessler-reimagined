@@ -68,14 +68,14 @@ class EncounterDiscovery:
                         end_time: datetime | None=None) -> list[Encounter]:
         if sort not in {"screening", "max_probability", "minimum_separation", "time"}:
             raise ValueError("Unknown encounter sort")
-        if not 1 <= limit <= 1000:
-            raise ValueError("Encounter limit must be between 1 and 1000")
+        if limit < 1:
+            raise ValueError("Encounter limit must be positive")
         if object_id is not None and (not object_id.isascii() or not object_id.isdecimal()):
             raise ValueError("Catalog ID must be a numeric string")
         now = now or datetime.now(UTC)
         if now.tzinfo is None:
             raise ValueError("Current time must be timezone-aware")
-        if not 0<=offset<=1000000: raise ValueError('Offset must be in0..1000000')
+        if offset<0: raise ValueError('Offset must be nonnegative')
         if any(t is not None and t.tzinfo is None for t in (start_time,end_time)):
             raise ValueError('Time filters must be aware UTC timestamps')
         if start_time is not None and end_time is not None and end_time<start_time:

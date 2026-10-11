@@ -63,8 +63,10 @@ def test_actual_itrs_units_and_independent_astropy_transform(visual_api):
     assert data['items'][2]['position_km'] is None and data['items'][2]['propagation_status']=='NOT_IN_CATALOG'
     later=client.post('/api/positions',json={'object_ids':['53495'],'epoch':(START+timedelta(minutes=1)).isoformat()}).json()['items'][0]
     assert np.linalg.norm(np.array(first['position_km'])-later['position_km'])>100
-    stale=client.post('/api/positions',json={'object_ids':['53495'],'epoch':(START+timedelta(days=30)).isoformat()}).json()['items'][0]
-    assert stale['position_km'] is None and stale['propagation_status']=='UNSUPPORTED_EPOCH'
+    stale_response=client.post('/api/positions',json={'object_ids':['53495'],'epoch':(START+timedelta(days=30)).isoformat()}).json()
+    stale=stale_response['items'][0]
+    assert stale['propagation_status']=='OK' and np.isfinite(stale['position_km']).all()
+    assert any('may be unreliable' in warning for warning in stale_response['warnings'])
 
 def test_real_sgp4_failure_is_isolated_without_mocking_physics(visual_api):
     _,engine=visual_api
@@ -89,12 +91,12 @@ def test_actual_orbit_and_encounter_trajectories(visual_api):
     assert all(t['frame']=='ITRS' and len(t['samples'])==5 for t in result.json()['trajectories'])
 
 @pytest.mark.parametrize('method,path,kwargs',[
-    ('get','/api/objects',{'params':{'limit':501}}),
+    ('get','/api/objects',{'params':{'limit':0}}),
     ('get','/api/objects',{'params':{'classification':'OPERATIONAL'}}),
     ('post','/api/positions',{'json':{'object_ids':['0']}}),
     ('post','/api/positions',{'json':{'object_ids':['53495'],'epoch':'2026-10-11T00:00:00'}}),
-    ('post','/api/positions',{'json':{'object_ids':[str(i+1) for i in range(2001)]}}),
-    ('get','/api/objects/53495/trajectory',{'params':{'sample_count':1002}}),
+    ('post','/api/positions',{'json':{'object_ids':[]}}),
+    ('get','/api/objects/53495/trajectory',{'params':{'sample_count':1}}),
     ('get','/api/objects/53495/trajectory',{'params':{'start_time':'not-a-time'}}),
     ('get','/api/objects/53495/trajectory',{'params':{'start_time':START.isoformat(),'end_time':(START+timedelta(days=2)).isoformat()}})])
 def test_invalid_visualization_requests(visual_api,method,path,kwargs):

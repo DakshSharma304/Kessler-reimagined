@@ -28,7 +28,6 @@ from app.api.persistence_schemas import DensityRequest,PersistenceRequest,SpaceW
 from app.physics.atmosphere import DensityResult,calculate_density,forcing_from_dataset
 from app.physics.persistence_scenarios import PersistenceSettings
 from app.persistence import PersistenceAnalysis,analyze_orbital_persistence
-from app.api.limits import calculation_slot
 from app.cleanup import record_persistence_evidence
 from app.api.persistence_visualization import PersistenceVisualization,visualization_view
 from pydantic import AwareDatetime
@@ -76,9 +75,9 @@ def catalog_status(engine: Engine = Depends(get_engine)):
 
 
 @router.get("/encounters", response_model=EncounterListResponse)
-def list_encounters(sort: SortOrder = "screening", limit: int = Query(50, ge=1, le=1000),
+def list_encounters(sort: SortOrder = "screening", limit: int = Query(50, ge=1),
                     object_id: str | None = None, name: str | None = None,
-                    offset: int = Query(0,ge=0,le=1000000),start_time: AwareDatetime | None=None,end_time: AwareDatetime | None=None,
+                    offset: int = Query(0,ge=0),start_time: AwareDatetime | None=None,end_time: AwareDatetime | None=None,
                     engine: Engine = Depends(get_engine)):
     items = engine.discovery.list_encounters(sort, limit, object_id, name,offset=offset,start_time=start_time,end_time=end_time)
     dataset = engine.socrates.get_dataset()
@@ -97,7 +96,7 @@ def probability_calculate(request: DirectProbabilityRequest | ReferenceProbabili
     return calculate_request(request)
 
 
-@router.post("/encounters/{encounter_id}/analyze", response_model=ProbabilityBaselineAnalysis | BaselineAnalysis,dependencies=[Depends(calculation_slot)])
+@router.post("/encounters/{encounter_id}/analyze", response_model=ProbabilityBaselineAnalysis | BaselineAnalysis)
 def analyze(encounter_id: str, request: AnalyzeRequest | None = None,
             engine: Engine = Depends(get_engine)):
     options = request or AnalyzeRequest()
@@ -106,7 +105,7 @@ def analyze(encounter_id: str, request: AnalyzeRequest | None = None,
     return with_live_probability(case, result, options.probability_inputs) if options.probability_analysis or options.probability_inputs is not None else result
 
 
-@router.post("/encounters/{encounter_id}/simulate", response_model=ProbabilityManeuverSimulation | ManeuverSimulation,dependencies=[Depends(calculation_slot)])
+@router.post("/encounters/{encounter_id}/simulate", response_model=ProbabilityManeuverSimulation | ManeuverSimulation)
 def simulate(encounter_id: str, request: SimulateRequest, engine: Engine = Depends(get_engine)):
     case = engine.selected_case(encounter_id)
     result = simulate_maneuver(*case, request.maneuvering_object_id,
@@ -114,7 +113,7 @@ def simulate(encounter_id: str, request: SimulateRequest, engine: Engine = Depen
     return result if request.probability_scenario is None else with_maneuver_probability(case, result, request.probability_scenario)
 
 
-@router.post("/encounters/{encounter_id}/optimize", response_model=OptimizationResult,dependencies=[Depends(calculation_slot)])
+@router.post("/encounters/{encounter_id}/optimize", response_model=OptimizationResult)
 def optimize(encounter_id: str, request: OptimizeRequest, engine: Engine = Depends(get_engine)):
     if request.encounter_id != encounter_id:
         raise ValueError("Body encounter_id must match the URL encounter_id")
@@ -128,7 +127,7 @@ def optimize(encounter_id: str, request: OptimizeRequest, engine: Engine = Depen
         cache=engine.catalog_propagation_cache)
 
 
-@router.post("/encounters/{encounter_id}/screen", response_model=ScreeningResult,dependencies=[Depends(calculation_slot)])
+@router.post("/encounters/{encounter_id}/screen", response_model=ScreeningResult)
 def screen(encounter_id: str, request: ScreenRequest, engine: Engine = Depends(get_engine)):
     if request.encounter_id is not None and request.encounter_id != encounter_id:
         raise ValueError("Body encounter_id must match the URL encounter_id")
@@ -168,11 +167,11 @@ def persistence_request(object_id,request,engine):
     return visualization_view(result) if request.visualization else result
 
 
-@router.post("/objects/{object_id}/decay",response_model=PersistenceVisualization | PersistenceAnalysis,dependencies=[Depends(calculation_slot)])
+@router.post("/objects/{object_id}/decay",response_model=PersistenceVisualization | PersistenceAnalysis)
 def object_decay(object_id: str,request: PersistenceRequest,engine: Engine = Depends(get_engine)):
     return persistence_request(object_id,request,engine)
 
 
-@router.post("/objects/{object_id}/persistence",response_model=PersistenceVisualization | PersistenceAnalysis,dependencies=[Depends(calculation_slot)])
+@router.post("/objects/{object_id}/persistence",response_model=PersistenceVisualization | PersistenceAnalysis)
 def object_persistence(object_id: str,request: PersistenceRequest,engine: Engine = Depends(get_engine)):
     return persistence_request(object_id,request,engine)
