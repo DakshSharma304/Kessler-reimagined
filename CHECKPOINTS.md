@@ -305,6 +305,51 @@ Status: PASSED.
   tests; zero failed/skipped/deselected. `git diff --check` exit 0.
   Final end-to-end/performance work begins only after this verified gate.
 
+## Phase 4 — Checkpoint 10: end-to-end/performance (blocked)
+
+Status: FAILED / STOPPED at the first mandatory test failure.
+
+- Last fully verified implementation is commit `3755e03` (Checkpoint 9,
+  **392 passing full-suite tests**). Checkpoints 1–9 passed. Phase 4 is NOT
+  complete and has NOT been pushed as completed work.
+- Added unverified local `app/persistence_benchmark.py` and
+  `tests/test_persistence_end_to_end.py`; these remain uncommitted. Actual
+  focused command, from backend:
+  `../.venv/bin/python -m pytest tests/test_persistence_end_to_end.py tests/test_boundary.py::test_actual_event_matches_independent_existing_trajectory_and_converges tests/test_probability_end_to_end.py::test_actual_live_geometry_scenario_maneuver_optimizer_and_screening tests/test_persistence_api_cli.py::test_actual_cli_process_live_object -v -s --maxfail=1`.
+- **5 tests collected; 1 failed, 2 warnings in 257.59 s; exit 1**. The other
+  four tests were unrun after the hard stop, not passed or skipped. No final
+  full-suite rerun, scenario/API benchmark, or completion claim was made.
+- Actual live ISS GP, real cached weather and NRLMSIS 2.1 used hypothetical
+  mass=100 kg, area=1 m², Cd=2.2 (NOT actual ISS properties), start
+  **2026-10-11T08:23:58.254896Z**. One-day service **9.131337 s**
+  (propagator **7.116039 s**, 10,862 derivatives), seven-day **64.298188 s**
+  (propagator **63.402943 s**, 75,662 derivatives), both NOT_REACHED.
+  Modeled total-energy changes −700.917382 / −3976.663930 J/kg, not observed
+  spacecraft decay. Thirty-day **180.924076 s**, NUMERICAL_FAILURE, no
+  trajectory/energy/crossing result fabricated.
+- Actual error warning: **`Propagation computation budget exhausted; no
+  complete lifetime prediction`**. Assertion:
+  `assert report["benchmark_status"] == "COMPLETE"`, actual **BLOCKED**.
+  No timeouts, tolerances or assertions were increased/weakened.
+- Source snapshot remains 25,436 rows; last observed flux 2026-10-10;
+  daily solar forecast 2026-10-11–2026-11-24, sufficient for this horizon.
+  Same checksum as Checkpoint 2. Weather load **0.950778 s**, 100 actual
+  density evaluations **0.005991 s**. The failure is the computation budget,
+  not missing forecast coverage or a source HTTP error.
+- Read-only diagnostic profile after stopping: warmed 3,600-second actual
+  GP/MSIS propagation **0.445247 s**, 512 derivatives, exit 0. Integration
+  **0.410 s**; force function **0.387 s**; 1,586 Earth-orientation rotation
+  evaluations **0.126 s**, 1,074 geodetic conversions **0.128 s**;
+  atmosphere wrapper **0.140 s**, pymsis itself **0.068 s**, drag validation/
+  force **0.088 s** (cumulative categories overlap). Approximately three
+  repeated rotations and two geodetic conversions per derivative, plus
+  scalar model/validation overhead, are the likely scaling bottleneck.
+- Proposed next step, **not implemented**: share the evaluated rotation/
+  geodetic state across boundary-validity, density and drag calculations;
+  retain real MSIS, input validation, integrator tolerance/step limits and
+  independent frame/convergence tests. Requires user authorization before
+  correcting or rerunning the failed checkpoint. Do not simply raise budget.
+
 ## Phase 3 verified checkpoints
 
 ## Phase 3 — Checkpoint 1: preserve the existing backend
