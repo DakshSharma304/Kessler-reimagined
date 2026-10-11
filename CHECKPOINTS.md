@@ -97,6 +97,36 @@ instantaneous states; numerical error is not physical uncertainty.
 
 ## Historical checkpoint records
 
+## Phase 3 — Checkpoint 5: scientific NASA validation
+
+Status: PASSED. Precise expected values read from the original NASA workbook
+Pc2D column, not rounded CDM headers. Covariances rotated using each object's
+original EME2000 state; encounter-plane projection applies the local linear
+closest-approach correction. Original inertial covariance is fixed only over
+the actual <0.5 ms rounding correction. NASA `PcMultiStep_FromCDM.m` explicitly
+sets `apply_covXcorr_corrections=false` (line 190 at the pinned commit).
+The adapter requires explicit `independent_benchmark=True` and labels this as
+historical independent-model validation, not risk for the correlated encounter.
+
+| Actual fixture pair/date | NASA precise Pc2D | Kessler Pc | Relative difference |
+| --- | --- | --- | --- |
+| Terra / Iridium 33 debris, 2021-03-24 | 0.021173811560368256 | 0.021173811560374473 | 2.94e-13 |
+| Terra / SL-16 debris, 2022-09-28 | 0.00010824948102737557 | 0.00010824948102745792 | 7.61e-13 |
+| HST / Delta 2 R/B(1), 2021-03-15 | 0.0006114793230828587 | 0.000611479323158796 | 1.24e-10 |
+| Swift / Jilin-01 Gaofen 2A, 2022-04-07 | 0.0023236849651128103 | 0.00232368496509251 | -8.74e-12 |
+
+Relative assertion tolerance **2e-9**, absolute tolerance **0**, justified by
+requested quadrature accuracy 1e-9, not the rounded-header precision. Retesting
+at 1e-11 quadrature tolerance confirms convergence. Altered reference metadata
+leaves calculated Pc unchanged; scientific answers are not hardcoded.
+
+- Actual reference command: `../.venv/bin/python -m pytest tests/test_probability_reference.py -v -s --maxfail=1`:
+  **6 passed in 1.29 s**, exit **0**.
+- Full `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **255 passed, 2 warnings in 259.45 s**, exit **0**, all prior tests rerun.
+
+## Historical Phase 1 and Phase 2 records
+
 The user's explicit instruction takes precedence over the pasted task's
 fix-and-continue wording: execute each checkpoint, record actual results,
 and stop on the first failure with evidence and a likely cause.
