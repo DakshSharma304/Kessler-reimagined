@@ -222,6 +222,34 @@ Status: PASSED.
   **363 passed, 2 upstream warnings in 334.61 s**, exit 0, all 354 prior tests.
   No skipped/deselected tests. Scenario work began only after this gate.
 
+## Phase 4 — Checkpoint 7: explicit persistence scenarios
+
+Status: PASSED.
+
+- Added strict PersistenceSettings and separate LOW_DRAG/NOMINAL/HIGH_DRAG
+  actual MSIS propagations. LOW/HIGH explicitly selected constant solar
+  histories use F10.7=80/220 sfu, Ap=4/40. NOMINAL supports source-only,
+  explicitly supplied constant assumptions, or explicitly supplied fallback
+  beyond unavailable daily forecast coverage. No density multiplier shortcut.
+- Optional ordered ballistic ratio range is explicitly supplied, must bracket
+  nominal properties, and changes the scenario propagations. No hidden mass,
+  area or Cd substitution. All source/assumed forcing provenance retained.
+- Controlled 250-km synthetic orbit, 5,400 s, hypothetical Cd*A/m=0.022 m²/kg:
+  calculated energy losses **1281.708607 / 2544.343251 / 4061.765142 J/kg**
+  for LOW/NOMINAL/HIGH. Initial density and energy responses ordered correctly
+  under these controlled assumptions; labels do not guarantee such ordering
+  for every real storm or geometry. Independent fixed-weather ratio test passed.
+- No-crossing scenarios retain null crossing times; ranges cover only reached
+  scenarios. Failed scenarios remain explicitly present with individual status.
+  Envelope states NOT a confidence interval/probability distribution.
+- Actual source weather lookup retained SOURCE_FORECAST, and a date beyond
+  complete daily coverage returned unavailable unless an explicit hypothetical
+  fallback was supplied; the latter remained USER_SUPPLIED_ASSUMPTION.
+- Focused scenario/boundary/decay tests: **29 passed, 1 warning in 20.51 s**,
+  exit 0. Full suite: **373 passed, 2 warnings in 329.66 s**, exit 0,
+  all 363 prior tests; no skips/deselections. Persistence service work began
+  only after this gate passed.
+
 ## Phase 3 verified checkpoints
 
 ## Phase 3 — Checkpoint 1: preserve the existing backend
