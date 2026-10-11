@@ -55,3 +55,33 @@ test('source unavailable has a readable recoverable state', async ({ page }) => 
   await expect(page.getByRole('button', { name: 'Try again' }).first()).toBeVisible();
   await expect(page.getByRole('navigation')).toBeVisible();
 });
+
+test('temporary BUSY analysis recovers without fabricating scientific results', async ({
+  page,
+}) => {
+  let attempts = 0;
+  await page.route('**/api/encounters/*/analyze', (route) => {
+    attempts++;
+    if (attempts === 1)
+      return route.fulfill({
+        status: 429,
+        contentType: 'application/json',
+        body: JSON.stringify({ status: 'BUSY', detail: 'Concurrent calculation limit reached' }),
+      });
+    return route.continue();
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Close approaches', exact: true }).click();
+  await page.getByLabel('Search encounters').fill('27056');
+  const selected = page.locator('.encounter-row').first();
+  await expect(selected).toContainText('COSMOS', { timeout: 60000 });
+  const recovered = page.waitForResponse(
+    (response) => response.url().endsWith('/analyze') && response.ok(),
+  );
+  await selected.click();
+  const analysis = await (await recovered).json();
+  expect(attempts).toBe(2);
+  expect(analysis.calculated.miss_distance_m).toBeGreaterThan(0);
+  await expect(page.getByText('Model separation', { exact: true })).toBeVisible();
+  await expect(page.getByText('unavailable no covariance', { exact: false })).toBeVisible();
+});

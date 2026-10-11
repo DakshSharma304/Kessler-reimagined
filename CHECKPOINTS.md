@@ -1,5 +1,23 @@
 # Implementation checkpoints
 
+## Local encounter-analysis BUSY recovery — targeted fix verified
+
+- A user screenshot of the localhost Network panel showed `429` on encounter
+  `analyze` requests. The backend intentionally allows only two concurrent
+  scientific calculations; switching encounters while old requests still run
+  can fill both slots. This is not a CORS or Modal/Vercel failure.
+- Encounter analysis now retries only the explicit `429 BUSY` response, with
+  five bounded backoff retries (1.5, 3, 5, 5, 5 s). Validation errors, network
+  failures and unrelated mutations are not replayed. The backend concurrency
+  limit and overload behavior remain unchanged.
+- Verified after the change: TypeScript check exit 0, production build exit 0,
+  17 unit tests passed, and all 3 focused real-browser encounter tests passed
+  (35.0 s). The new browser case injects only the first BUSY transport response;
+  its successful scientific result comes from the actual local backend.
+- The complete backend and full frontend browser regressions were not rerun for
+  this targeted change. The frontend may still show BUSY if the backend remains
+  saturated longer than the bounded retry window.
+
 ## Phase 6 — frontend checkpoint policy and baseline
 
 The latest Phase6 brief authorizes fixing/retesting failures, with a hard stop

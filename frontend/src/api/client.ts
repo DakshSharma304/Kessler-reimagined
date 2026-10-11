@@ -80,3 +80,9 @@ export async function request<T>(
 }
 export const retryRead = (count: number, error: Error) =>
   !(error instanceof ApiError && [0, 404, 422, 429].includes(error.status)) && count < 1;
+
+// A BUSY response means this calculation was rejected before it started.
+// Retry only the encounter analysis query; do not replay arbitrary mutations.
+export const retryBusyAnalysis = (count: number, error: Error) =>
+  error instanceof ApiError && error.status === 429 && error.code === 'BUSY' && count < 5;
+export const busyAnalysisDelay = (count: number) => Math.min(1500 * 2 ** count, 5000);

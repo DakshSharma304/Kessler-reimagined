@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { request, type Model } from '../api/client';
+import { busyAnalysisDelay, request, retryBusyAnalysis, type Model } from '../api/client';
 import { useUI } from '../stores/ui';
 import { useEffect, useState } from 'react';
 import { useVisual } from '../stores/visual';
@@ -91,7 +91,8 @@ export function useAnalysis() {
   return useQuery({
     queryKey: ['analysis', id],
     enabled: !!id,
-    retry: false,
+    retry: retryBusyAnalysis,
+    retryDelay: busyAnalysisDelay,
     queryFn: ({ signal }) =>
       request<Model<'ProbabilityBaselineAnalysis'>>(`/encounters/${id}/analyze`, {
         body: { probability_analysis: true },
