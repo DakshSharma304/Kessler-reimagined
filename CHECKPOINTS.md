@@ -2,27 +2,6 @@
 
 ## Phase 3 verified checkpoints
 
-## Phase 3 — Checkpoint 2: NASA CDM ingestion
-
-Status: PASSED. Four unmodified KVN CDMs, the NASA README and precise
-reference workbook downloaded from pinned NASA commit
-`ce0f00722c56808755ee0adbe47a4e3d56439484`. Both object states, per-object RTN
-position covariances, EME2000 frame, UTC TCA, explicit km/km/s/m² units,
-combined header HBR and rounded reference Pc verified against actual metadata.
-Unknown metadata (including DCP correlations) is retained. Unsupported frames,
-units, missing covariance/state fields, duplicate fields and non-PSD matrices
-are rejected. Missing optional radius/Pc remains absent, never fabricated.
-Historical source identity is separate from live SOCRATES. Original workbook
-SHA-256: `dcb1f5bf51703ee793582d21b1f669dc388d9eb0b9f4b3871f13055cc885eb85`.
-NASA scripts specify an independent Pc2D benchmark and local linear TCA
-correction; this is not a claim of calibrated risk despite DCP metadata.
-
-- Targeted command: `../.venv/bin/python -m pytest tests/test_probability_cdm.py -v --maxfail=1`:
-  **13 passed in 0.42 s**, exit **0**.
-- Full command: `../.venv/bin/python -m pytest -q --maxfail=1`:
-  **210 passed, 2 warnings in 267.09 s**, exit **0**; all 197 previous tests
-  rerun, including actual source, optimizer, screening, API/CLI and startup.
-
 ## Phase 3 — Checkpoint 1: preserve the existing backend
 
 Status: PASSED (2026-10-11). Phase 3 uses the current task's explicit
@@ -48,6 +27,28 @@ on the same blocker; earlier phase failure policies below are historical.
   not affect successful scientific or startup assertions. No baseline tests
   skipped or weakened. No Phase 3 implementation preceded this gate.
 
+
+## Phase 3 — Checkpoint 2: NASA CDM ingestion
+
+Status: PASSED. Four unmodified KVN CDMs, the NASA README and precise
+reference workbook downloaded from pinned NASA commit
+`ce0f00722c56808755ee0adbe47a4e3d56439484`. Both object states, per-object RTN
+position covariances, EME2000 frame, UTC TCA, explicit km/km/s/m² units,
+combined header HBR and rounded reference Pc verified against actual metadata.
+Unknown metadata (including DCP correlations) is retained. Unsupported frames,
+units, missing covariance/state fields, duplicate fields and non-PSD matrices
+are rejected. Missing optional radius/Pc remains absent, never fabricated.
+Historical source identity is separate from live SOCRATES. Original workbook
+SHA-256: `dcb1f5bf51703ee793582d21b1f669dc388d9eb0b9f4b3871f13055cc885eb85`.
+NASA scripts specify an independent Pc2D benchmark and local linear TCA
+correction; this is not a claim of calibrated risk despite DCP metadata.
+
+- Targeted command: `../.venv/bin/python -m pytest tests/test_probability_cdm.py -v --maxfail=1`:
+  **13 passed in 0.42 s**, exit **0**.
+- Full command: `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **210 passed, 2 warnings in 267.09 s**, exit **0**; all 197 previous tests
+  rerun, including actual source, optimizer, screening, API/CLI and startup.
+
 ## Phase 3 — Checkpoint 3: covariance mathematics
 
 Status: PASSED. Implemented SI 3x3 validation, orthogonal transformations,
@@ -66,8 +67,6 @@ roundoff; eigenvalues are never clipped. Zero relative velocity is unsupported.
   rotation, round trip, symmetry, PSD/invalid matrices, correlated examples,
   distinct object RTN orientations, plane basis/projection, actual NASA
   rotations and all 210 previous tests passed.
-
-## Historical Phase 1 checkpoint policy
 
 ## Phase 3 — Checkpoint 4: actual probability integration
 
@@ -94,8 +93,6 @@ instantaneous states; numerical error is not physical uncertainty.
 - Rerun all current probability tests: **52 passed, 1 warning in 2.92 s**, exit 0.
 - Full `../.venv/bin/python -m pytest -q --maxfail=1`:
   **249 passed, 2 warnings in 285.68 s**, exit **0**, all prior tests rerun.
-
-## Historical checkpoint records
 
 ## Phase 3 — Checkpoint 5: scientific NASA validation
 
@@ -126,6 +123,28 @@ leaves calculated Pc unchanged; scientific answers are not hardcoded.
   **255 passed, 2 warnings in 259.45 s**, exit **0**, all prior tests rerun.
 
 ## Historical Phase 1 and Phase 2 records
+
+## Phase 3 — Checkpoint 6: live availability and uncertainty scenarios
+
+Status: PASSED. All five required availability states implemented. Inputs
+require explicit covariance kind (SUPPLIED/ASSUMED), per-object matrices,
+frames, aware epochs and combined HBR; optional IDs are checked against the
+selected pair. Invalid/missing fields cannot produce Pc. Known correlations
+without cross-covariance and incompatible epochs/frames are unsupported.
+Assumed covariance outputs carry exactly:
+`ILLUSTRATIVE — USER-SUPPLIED UNCERTAINTY ASSUMPTIONS.`
+No covariance, radius or independence for known correlations is fabricated.
+
+- Actual source case `socrates-f3f9e438db4c8a81fa4b93e5`, retrieved GP and
+  refined SGP4 TCA `2026-10-13T05:09:03.226914Z`: preserved real SOCRATES
+  `MAX_PROB=1.0`, returned **UNAVAILABLE_NO_COVARIANCE**, calculated Pc null.
+  Historical NASA references are explicitly rejected by the live adapter.
+- Targeted `tests/test_probability_availability.py`: **12 passed in 7.37 s**,
+  exit **0**, including an actual live-source geometry flow.
+- Full `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **267 passed, 2 warnings in 258.41 s**, exit **0**, all 255 prior tests rerun.
+
+## Historical records below
 
 The user's explicit instruction takes precedence over the pasted task's
 fix-and-continue wording: execute each checkpoint, record actual results,
