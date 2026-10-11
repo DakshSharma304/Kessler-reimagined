@@ -75,6 +75,39 @@ Status: PASSED.
   tests rerun, no skips or deselections. Density implementation did not begin
   until this gate passed.
 
+## Phase 4 — Checkpoint 3: NRLMSIS atmospheric density
+
+Status: PASSED.
+
+- Read official pymsis API documentation and installed version's signature/
+  docstring. Installed binary `pymsis==0.12.0` without changing existing pins;
+  model version explicitly **NRLMSIS 2.1**, no implicit library weather downloads.
+  Pip installation/check both exit 0; no broken requirements.
+- `app/physics/atmosphere.py` implements validated explicit weather forcing,
+  correct previous-day Earth-distance F10.7, modeled-date centered81 and
+  storm-time Ap vector (daily, current/3/6/9 hours, 12–33/36–57-hour averages).
+  Qualifiers/checksum/timestamps/limitations accompany source inputs.
+- Actual GCRS/TEME state positions transform through Astropy to ITRS and
+  WGS84 geodetic latitude/longitude/altitude. Longitude −180..180 degrees,
+  altitude metres converted to pymsis kilometres; density returned kg/m³.
+  Explicit supported model interval 0–1000 km, no extrapolation.
+- Controlled independent direct pymsis call reproduced exactly:
+  2026-10-09 12:00 UTC, 40° N, −105°, 400 km, hypothetical previous/center81
+  F10.7=150 sfu and Ap=15: **3.0355277753219e-12 kg/m³**. Positive, finite,
+  deterministic. Controlled 200/400/800-km altitude ordering and low/high
+  solar/Ap response passed. Coordinate round trips include high latitude,
+  southern hemisphere, near-dateline and TEME input.
+- Density-provider interface includes explicitly named constant verification
+  atmosphere, never a real-data default. Real weather timing independently
+  reconstructed and supplied to actual MSIS; unavailable/as-of data rejected.
+- Focused weather/density run: **29 passed, 1 warning in 5.12 s**, exit 0.
+- Full `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **331 passed, 2 upstream warnings in 327.76 s**, exit 0, all 313 prior tests.
+- Measured 100 actual MSIS density calls **0.014563 s**, 100 direct Astropy
+  scalar geodetic conversions **0.923745 s**, after initial frame setup.
+  Coordinate conversion is the measured propagation-performance concern;
+  any future accelerated transforms must be independently validated.
+
 ## Phase 3 verified checkpoints
 
 ## Phase 3 — Checkpoint 1: preserve the existing backend
