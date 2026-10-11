@@ -1,6 +1,6 @@
 # Implementation checkpoints
 
-## Phase 3 — Checkpoint 1: preserve the existing backend
+## Phase 3 verified checkpoints
 
 ## Phase 3 — Checkpoint 2: NASA CDM ingestion
 
@@ -22,6 +22,8 @@ correction; this is not a claim of calibrated risk despite DCP metadata.
 - Full command: `../.venv/bin/python -m pytest -q --maxfail=1`:
   **210 passed, 2 warnings in 267.09 s**, exit **0**; all 197 previous tests
   rerun, including actual source, optimizer, screening, API/CLI and startup.
+
+## Phase 3 — Checkpoint 1: preserve the existing backend
 
 Status: PASSED (2026-10-11). Phase 3 uses the current task's explicit
 fix-and-retest policy, stopping after three substantial unsuccessful attempts
@@ -45,6 +47,27 @@ on the same blocker; earlier phase failure policies below are historical.
 - Offline Astropy cache/read-only warning and upstream AnyIO deprecation do
   not affect successful scientific or startup assertions. No baseline tests
   skipped or weakened. No Phase 3 implementation preceded this gate.
+
+## Phase 3 — Checkpoint 3: covariance mathematics
+
+Status: PASSED. Implemented SI 3x3 validation, orthogonal transformations,
+individual object RTN/RIC bases, real TEME/GCRS rotations using existing
+Astropy utilities, common-frame relative covariance and 2D projection.
+EME2000/GCRF are retained without relabeling; unsupported cross-frame
+conversions and epoch mismatches fail clearly. Known correlation requires
+cross-covariance, including a PSD joint 6x6 check; relative covariance is
+P1+P2−C12−C12ᵀ. Unspecified correlation requires a disclosed independence
+assumption. PSD tolerance is 64 machine eps times spectral norm, solely for
+roundoff; eigenvalues are never clipped. Zero relative velocity is unsupported.
+
+- Targeted reader/math suite: **32 passed, 1 warning in 2.40 s**, exit **0**.
+- Full `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **229 passed, 2 warnings in 269.02 s**, exit **0**. Identity, analytical
+  rotation, round trip, symmetry, PSD/invalid matrices, correlated examples,
+  distinct object RTN orientations, plane basis/projection, actual NASA
+  rotations and all 210 previous tests passed.
+
+## Historical Phase 1 checkpoint policy
 
 The user's explicit instruction takes precedence over the pasted task's
 fix-and-continue wording: execute each checkpoint, record actual results,
