@@ -33,7 +33,8 @@ from app.cleanup import record_persistence_evidence
 from app.api.persistence_visualization import PersistenceVisualization,visualization_view
 from pydantic import AwareDatetime
 
-router = APIRouter(prefix="/api")
+from app.api.error_schemas import ERROR_RESPONSES
+router = APIRouter(prefix="/api",responses=ERROR_RESPONSES)
 
 
 class HealthResponse(BaseModel):

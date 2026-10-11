@@ -9,7 +9,8 @@ from app.models.visualization import (CatalogPage,ObjectInfo,PositionRequest,Pos
 from app.visualization import (list_objects,object_info,bulk_positions,object_trajectory,
     encounter_trajectories,maneuver_trajectories)
 
-router=APIRouter(prefix='/api')
+from app.api.error_schemas import ERROR_RESPONSES
+router=APIRouter(prefix='/api',responses=ERROR_RESPONSES)
 
 @router.get('/objects',response_model=CatalogPage)
 def objects(search: str | None=Query(None,max_length=100),classification: ObjectClassification | None=None,

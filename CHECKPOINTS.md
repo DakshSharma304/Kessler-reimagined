@@ -146,6 +146,36 @@ Current API request/response schemas (actual OpenAPI references; none invented):
   B=secondary_integration,secondary_api_cli,screened_optimizer;
   C=all remaining files. All upstream warnings remain disclosed.
 
+### Checkpoint 5 — PASSED
+
+- Created `FRONTEND_CONTRACT.md`, exact `openapi.json` (21 paths, 22
+  operations, 83 schemas), HTTP-only `python -m app.frontend_smoke`, and
+  reproducible `python -m app.export_frontend`. Existing scientific error
+  responses are now documented alongside FastAPI validation errors; their
+  runtime behavior has not changed.
+- Actual server started using `KESSLER_PORT=8015 ../.venv/bin/python -m
+  app.server`. Public smoke command exited0: all six workflows passed,
+  30 genuine request/response exchanges captured in `frontend_examples.json`
+  at 2026-10-11T10:07:06.996881+00:00. Every response validated against its
+  actual FastAPI response model. Six verbatim curl examples were rerun:
+  every request HTTP200. OpenAPI refs resolve and export is repeatable.
+- Live encounter `socrates-599855ce2ca729ae50cb34e9`; both maneuver
+  alternatives honestly screened INCOMPLETE, not a safety certificate.
+  Live Pc UNAVAILABLE_NO_COVARIANCE; historical Terra March2021 reference
+  relative discrepancy2.9362918056463266e-13; fixed-covariance scenarios
+  explicitly ILLUSTRATIVE. Actual MSIS atmospheric scenarios calculated.
+  Modeled cleanup selection29734/29737 from explicit five-object pool.
+- Focused handoff tests4 passed/7.81s; after documentation-generator
+  precision improvement, all4 rerun passed/8.75s, exit0. Existing/new full
+  suite: shardA15 passed/173.16s, B31 passed/187.70s, C396 passed/215.79s,
+  each exit0. JUnit union equals all442 collected tests exactly, with zero
+  failures/errors/skips/duplicates/omissions. Upstream warnings unchanged.
+- All schemas/units/statuses/caps/provenance, allowed CORS, invalid startup
+  configuration and both error shapes verified. No hardcoded developer
+  paths, fabricated example outputs, new dependencies or fully-offline
+  live-backend claim. Root example transcript is an explicitly dated
+  integration deliverable, not a download cache or current live guarantee.
+
 ## Phase 4 — Checkpoint policy
 
 The latest explicit user instruction and AGENTS.md require stopping at the
