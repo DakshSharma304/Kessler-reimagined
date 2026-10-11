@@ -10,6 +10,7 @@ from app.data.catalog import CatalogLoader
 from app.data.celestrak import CelestrakClient
 from app.data.discovery import EncounterDiscovery
 from app.data.socrates import SocratesClient
+from app.data.space_weather import SpaceWeatherClient
 from app.physics.secondary_search import CatalogPropagationCache
 
 
@@ -20,6 +21,7 @@ class Engine:
         self.discovery = EncounterDiscovery(self.socrates)
         self.celestrak = CelestrakClient(self.cache, http)
         self.catalog = CatalogLoader(self.cache, http)
+        self.space_weather = SpaceWeatherClient(self.cache, http)
         self.catalog_propagation_cache = CatalogPropagationCache()
 
     def selected_case(self, identifier: str):

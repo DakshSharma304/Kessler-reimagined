@@ -250,6 +250,37 @@ Status: PASSED.
   all 363 prior tests; no skips/deselections. Persistence service work began
   only after this gate passed.
 
+## Phase 4 — Checkpoint 8: real-object persistence service
+
+Status: PASSED.
+
+- Added `app/persistence.py`, joining actual selected GP→SGP4→GCRS→explicit
+  aerodynamic properties→weather/MSIS→drag→boundary→scenario metrics.
+  Engine gains a lazily used SpaceWeatherClient; no startup download.
+- Initial GP epoch restricted to seven days from the starting state, with
+  explicit increasing long-horizon uncertainty. No indefinite SGP4 propagation,
+  fabricated mass/area, BSTAR conversion or cleanup ranking.
+- Instantaneous WGS84 geodetic altitude-band occupancy uses piecewise-linear
+  returned samples, with explicit sampling limitations and unclassified time.
+  It does not mix perigee/apogee orbital-element categories with altitude time.
+  Modeled duration is conserved across disjoint bands; missing/failed results
+  remain null/explicit rather than invented metrics.
+- Actual external GP retrieval and real MSIS propagation succeeded:
+  ISS 25544 epoch **2026-10-10T18:56:31.282080Z**, sampled initial altitude
+  **420,688.571 m**, density **2.931826e-12 kg/m³**, propagation **0.077614 s**;
+  NOAA 15 25338 epoch **2026-10-10T22:27:52.056288Z**, altitude
+  **829,147.659 m**, density **5.888327e-15 kg/m³**, **0.051479 s**.
+  Both correctly NOT_REACHED_WITHIN_HORIZON for **86.4 modeled seconds**.
+  Supplied Cd*A/m=0.022 m²/kg was hypothetical, not actual spacecraft data.
+- Focused persistence/scenario tests: **15 passed, 1 warning in 12.05 s**,
+  exit 0, including source identity, actual trajectory, scenarios, provenance,
+  missing properties and long-lived/no-boundary response.
+- Full suite: **378 passed, 2 warnings in 634.71 s**, exit 0, all 373 prior
+  tests; no skips/deselections. Runtime was longer than preceding gates;
+  passive process inspection showed an active CPU-using test process, not a
+  stopped runner. No coverage/timeouts/assertions were weakened. API/CLI work
+  began only after the actual successful result.
+
 ## Phase 3 verified checkpoints
 
 ## Phase 3 — Checkpoint 1: preserve the existing backend
