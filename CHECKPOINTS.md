@@ -198,6 +198,30 @@ Status: PASSED after explicit user authorization.
   convention and fixed gravity pole limitations are disclosed in output.
 - Boundary detection development began only after this successful gate.
 
+## Phase 4 — Checkpoint 6: terminal atmospheric-boundary events
+
+Status: PASSED.
+
+- Added `app/physics/boundary.py` and descending terminal solve_ivp geodetic
+  event to the verified propagator. Default 120 km; supported explicit cutoff
+  80–500 km. Samples stop at the root, never through breakup or ground impact.
+- Explicit seven prediction statuses distinguish bounded no-crossing, missing
+  properties/weather, unsupported initial states, numerical/model failure and
+  actual calculated crossing. No crossing time is fabricated when unavailable.
+- Controlled synthetic orbit crossed at **1310.210038 s** from the initial
+  epoch, **2026-10-09T12:21:50.210038Z**. Independently refined original
+  NumericalTrajectory/direct Astropy altitude gave **1310.2100358172484 s**.
+  Tightened integration, cutoff altitude agreement and all sample endpoints
+  passed; a 130-km cutoff correctly occurred earlier.
+- Focused boundary/decay/drag command: **32 passed, 1 warning in 8.72 s**,
+  exit 0. Includes no crossing, below-cutoff initial state, missing inputs,
+  isolated solver-failure handling, weather failure, budget exhaustion and
+  invalid cutoffs. Failure injection tests status handling, not scientific
+  answers; the event/time calculations are actual numerical dynamics.
+- Full `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **363 passed, 2 upstream warnings in 334.61 s**, exit 0, all 354 prior tests.
+  No skipped/deselected tests. Scenario work began only after this gate.
+
 ## Phase 3 verified checkpoints
 
 ## Phase 3 — Checkpoint 1: preserve the existing backend

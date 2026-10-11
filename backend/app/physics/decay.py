@@ -33,6 +33,10 @@ class DecayNumericalFailure(RuntimeError):
     pass
 
 
+class DecayModelOutOfValidity(DecayUnsupported):
+    pass
+
+
 class SolverSettings(BaseModel):
     model_config = ConfigDict(frozen=True,extra="forbid",allow_inf_nan=False)
     rtol: float = Field(default=1e-9,ge=1e-12,le=1e-6)
@@ -70,6 +74,8 @@ class DecayPropagation(BaseModel):
     solver_settings: SolverSettings
     environment: dict
     aerodynamic_properties: dict
+    boundary_altitude_m: float = 120000
+    boundary_crossing_time: datetime | None = None
     model: str = "DOP853 / GCRS / WGS84 central gravity + J2 + co-rotating drag"
     assumptions: list[str]
     warnings: list[str]
@@ -131,7 +137,7 @@ def orbital_quantities(state,pole):
 
 
 def propagate_orbital_decay(initial_state,start_time,duration,aerodynamic_properties,
-        atmosphere,solver_settings=None) -> DecayPropagation:
+        atmosphere,solver_settings=None,*,boundary_altitude_m=120000) -> DecayPropagation:
     settings = solver_settings or SolverSettings()
     if not isinstance(settings,SolverSettings): settings = SolverSettings.model_validate(settings)
     if start_time.tzinfo is None or initial_state.timestamp != start_time:
@@ -143,6 +149,8 @@ def propagate_orbital_decay(initial_state,start_time,duration,aerodynamic_proper
         raise DecayUnsupported("Explicit aerodynamic properties required; no BSTAR substitution")
     if atmosphere is None:
         raise DecayUnsupported("Explicit atmospheric density provider required")
+    if not math.isfinite(boundary_altitude_m) or not 80000 <= boundary_altitude_m <= 500000:
+        raise ValueError("Boundary must be finite WGS84 geodetic altitude between 80 and 500 km")
     initial = teme_to_gcrs(initial_state) if initial_state.frame == "TEME" else initial_state
     end = start_time+timedelta(seconds=seconds)
     started = time.perf_counter()
@@ -150,8 +158,8 @@ def propagate_orbital_decay(initial_state,start_time,duration,aerodynamic_proper
     gravity_pole = earth_pole_gcrs(start_time)
     orbital_quantities(initial,gravity_pole)
     initial_alt = orientation.geodetic(initial).altitude_m
-    if not 120000 < initial_alt <= 1000000:
-        raise DecayUnsupported("Initial geodetic altitude must be above 120 km and at most 1000 km")
+    if not boundary_altitude_m < initial_alt <= 1000000:
+        raise DecayUnsupported("Initial geodetic altitude must be above configured boundary and at most 1000 km")
     if hasattr(atmosphere,"prepare"):
         atmosphere = atmosphere.prepare(orientation)
     deadline = started+settings.timeout_seconds
@@ -166,34 +174,43 @@ def propagate_orbital_decay(initial_state,start_time,duration,aerodynamic_proper
         state = state_at(t,y)
         geo = orientation.geodetic(state)
         if not 80000 <= geo.altitude_m <= 1000000:
-            raise DecayUnsupported("Trial state outside 80–1000-km orbital model validity; stop, no ground-impact propagation")
+            raise DecayModelOutOfValidity("Trial state outside 80–1000-km orbital model validity; stop, no ground-impact propagation")
         rho = atmosphere.density(state)
         if not math.isfinite(rho) or rho < 0:
             raise DecayNumericalFailure("Atmosphere returned nonfinite/negative density")
         central,j2 = gravity_components(y[:3],gravity_pole)
         return np.concatenate([y[3:],central+j2+acceleration_drag(state,rho,aerodynamic_properties,orientation.pole(state.timestamp))])
 
+    def boundary_event(t,y):
+        return orientation.position_geodetic(start_time+timedelta(seconds=float(t)),y[:3]).altitude_m-boundary_altitude_m
+    boundary_event.terminal = True
+    boundary_event.direction = -1
     solution = solve_ivp(derivatives,(0,seconds),[*initial.position_m,*initial.velocity_m_s],
         method="DOP853",rtol=settings.rtol,atol=[settings.position_atol_m]*3+[settings.velocity_atol_m_s]*3,
-        max_step=settings.max_step_seconds,dense_output=True)
+        max_step=settings.max_step_seconds,dense_output=True,events=boundary_event)
     if not solution.success or not np.isfinite(solution.y).all():
         raise DecayNumericalFailure(f"Numerical integration failed: {solution.message}")
-    offsets = np.linspace(0,seconds,max(2,min(20000,int(math.ceil(seconds/settings.sample_step_seconds))+1)))
+    crossing = bool(len(solution.t_events[0]))
+    integrated_seconds = float(solution.t[-1])
+    integrated_end = start_time+timedelta(seconds=integrated_seconds)
+    offsets = np.linspace(0,integrated_seconds,max(2,min(20000,int(math.ceil(integrated_seconds/settings.sample_step_seconds))+1)))
     samples = []
     for offset in offsets:
         state = state_at(offset,solution.sol(offset))
         samples.append(DecaySample(state=state,geodetic=orientation.geodetic(state),
             density_kg_m3=atmosphere.density(state),**orbital_quantities(state,gravity_pole)))
-    return DecayPropagation(status="PROPAGATED_WITHIN_HORIZON",start_time=start_time,requested_end_time=end,
-        integrated_end_time=end,horizon_days=seconds/86400,samples=samples,
+    return DecayPropagation(status="BOUNDARY_REACHED" if crossing else "PROPAGATED_WITHIN_HORIZON",start_time=start_time,requested_end_time=end,
+        integrated_end_time=integrated_end,horizon_days=seconds/86400,samples=samples,
         elapsed_seconds=time.perf_counter()-started,derivative_evaluations=solution.nfev,
         solver_settings=settings,environment=atmosphere.provenance(),
         aerodynamic_properties=aerodynamic_properties.model_dump(),
+        boundary_altitude_m=boundary_altitude_m,boundary_crossing_time=integrated_end if crossing else None,
         assumptions=["GCRS SI initial state; SGP4 TEME inputs are transformed, never relabeled.",
             "Shared WGS84 central/J2 dynamics; gravity pole fixed at initial epoch as in existing numerical model.",
             "Co-rotation axis and geographic density positions use time-varying GCRS/ITRS orientation.",
             "SO(3) Earth-orientation interpolation at at most 20-minute spacing; density itself is not interpolated.",
             "Constant supplied effective Cd*A/m; no attitude dynamics, winds or active orbit control.",
+            "Terminal descending WGS84 geodetic boundary event; no output beyond the cutoff.",
             "Osculating central-gravity elements; perigee/apogee are radii minus equatorial Earth radius, not geodetic heights."],
         warnings=["Bounded research model, not observationally verified decay or operational reentry prediction.",
             "J2 produces short-period osculating-element oscillations; individual semimajor-axis samples need not monotonically decrease.",
