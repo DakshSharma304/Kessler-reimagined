@@ -16,6 +16,7 @@ class DensityRequest(BaseModel):
 class PersistenceRequest(PersistenceSettings):
     aerodynamic_properties: ObjectAerodynamicProperties | None = None
     start_time: AwareDatetime | None = None
+    visualization: bool = False
 
 
 class SpaceWeatherStatus(BaseModel):

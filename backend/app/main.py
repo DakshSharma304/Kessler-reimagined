@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
 from app.api.visualization_routes import router as visualization_router
@@ -15,14 +16,14 @@ from app.physics.encounters import CalculationUnavailable
 from app.physics.maneuvers import ManeuverError
 from app.physics.propagation import PropagationError
 
-app = FastAPI(title=settings.service, version=settings.version)
-app.state.engine = Engine()
-app.include_router(router)
-app.include_router(visualization_router)
+from app.api.cleanup_routes import router as cleanup_router
+from app.api.limits import CalculationBusy
 
 
 async def scientific_error(_request, error):
-    if isinstance(error, EncounterNotFound):
+    if isinstance(error,CalculationBusy):
+        code,status=429,'BUSY'
+    elif isinstance(error, EncounterNotFound):
         code, status = 404, "NOT_FOUND"
     elif isinstance(error, (SourceUnavailable, OrbitalUnavailable,SpaceWeatherUnavailable)):
         code, status = 503, "UNAVAILABLE"
@@ -31,6 +32,18 @@ async def scientific_error(_request, error):
     return JSONResponse(status_code=code, content={"status": status, "detail": str(error)})
 
 
-for error_type in (EncounterNotFound, SourceUnavailable, OrbitalUnavailable,
-                   CalculationUnavailable, ManeuverError, PropagationError, ValueError,SpaceWeatherUnavailable):
-    app.add_exception_handler(error_type, scientific_error)
+def create_app(config=None):
+    config=config or settings
+    application=FastAPI(title=config.service,version=config.version)
+    application.state.engine=Engine(config=config)
+    application.add_middleware(CORSMiddleware,allow_origins=list(config.allowed_origins),
+        allow_credentials=False,allow_methods=['GET','POST','OPTIONS'],allow_headers=['Content-Type'])
+    application.include_router(router)
+    application.include_router(visualization_router)
+    application.include_router(cleanup_router)
+    for error_type in (EncounterNotFound, SourceUnavailable, OrbitalUnavailable,
+        CalculationUnavailable,ManeuverError,PropagationError,ValueError,SpaceWeatherUnavailable,CalculationBusy):
+        application.add_exception_handler(error_type,scientific_error)
+    return application
+
+app=create_app()

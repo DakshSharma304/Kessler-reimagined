@@ -64,7 +64,8 @@ class EncounterDiscovery:
 
     def list_encounters(self, sort: SortOrder = "screening", limit: int = 50,
                         object_id: str | None = None, name: str | None = None,
-                        now: datetime | None = None) -> list[Encounter]:
+                        now: datetime | None = None,*,offset: int=0,start_time: datetime | None=None,
+                        end_time: datetime | None=None) -> list[Encounter]:
         if sort not in {"screening", "max_probability", "minimum_separation", "time"}:
             raise ValueError("Unknown encounter sort")
         if not 1 <= limit <= 1000:
@@ -74,9 +75,16 @@ class EncounterDiscovery:
         now = now or datetime.now(UTC)
         if now.tzinfo is None:
             raise ValueError("Current time must be timezone-aware")
+        if not 0<=offset<=1000000: raise ValueError('Offset must be in0..1000000')
+        if any(t is not None and t.tzinfo is None for t in (start_time,end_time)):
+            raise ValueError('Time filters must be aware UTC timestamps')
+        if start_time is not None and end_time is not None and end_time<start_time:
+            raise ValueError('Encounter time interval must be ordered')
         encounters = self._load()
         matches = [item for item in encounters
                    if item.time_of_closest_approach >= now
+                   and (start_time is None or item.time_of_closest_approach>=start_time)
+                   and (end_time is None or item.time_of_closest_approach<=end_time)
                    and (object_id is None or object_id in {item.object_1_id, item.object_2_id})
                    and (name is None or name.casefold() in item.object_1_name.casefold()
                         or name.casefold() in item.object_2_name.casefold())]
@@ -89,4 +97,4 @@ class EncounterDiscovery:
         else:
             # Lexicographic criteria, never a combined calibrated danger score.
             key = lambda item: (item.data_status != "VALID", has_age_caution(item), *probability_key(item))
-        return sorted(matches, key=key)[:limit]
+        return sorted(matches, key=key)[offset:offset+limit]

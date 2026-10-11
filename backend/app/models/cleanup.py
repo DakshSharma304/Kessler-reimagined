@@ -114,6 +114,7 @@ class CleanupPortfolio(BaseModel):
     total_abstract_resource_expenditure: float
     budget_remaining: float | None
     excluded_objects: dict[str,list[str]]
+    selection_reasons: dict[str,str] = Field(default_factory=dict)
     unique_screening_encounters_represented: int
     shared_screening_encounter_ids: list[str]
     policy: PriorityPolicy
@@ -121,3 +122,23 @@ class CleanupPortfolio(BaseModel):
     coverage: dict
     model_assumptions: list[str]
     warnings: list[str]
+
+
+class CleanupRequest(BaseModel):
+    model_config=ConfigDict(extra='forbid',allow_inf_nan=False)
+    constraints: CleanupConstraints = Field(default_factory=CleanupConstraints)
+    policy: PriorityPolicy = Field(default_factory=PriorityPolicy)
+    candidate_ids: list[str] | None = Field(default=None,max_length=1000)
+
+    @field_validator('candidate_ids',mode='before')
+    @classmethod
+    def canonical_candidates(cls,values):
+        if values is None: return None
+        if not isinstance(values,list) or not 1<=len(values)<=1000: raise ValueError('Supply 1..1000 candidate IDs')
+        return list(dict.fromkeys(validate_object_id(v) for v in values))
+
+    @model_validator(mode='after')
+    def workload(self):
+        if self.candidate_ids is not None and len(self.candidate_ids)>self.constraints.max_candidates:
+            raise ValueError('candidate_ids exceeds constraints.max_candidates')
+        return self

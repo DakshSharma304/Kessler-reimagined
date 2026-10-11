@@ -112,6 +112,40 @@ Current API request/response schemas (actual OpenAPI references; none invented):
 - Full current regression: **428 passed, 2 warnings in591.04s**, exit0,
   no skips/deselections. Exactly20 OpenAPI paths, every schema ref resolves.
 
+### Checkpoint 4 — PASSED
+
+- All six frontend workflows execute through production HTTP routes/services
+  using genuine input fixtures: browse/ITRS paths, encounters, same-anchor
+  optimizer/simulator/secondary screen, NASA+live/scenario Pc, actual MSIS
+  persistence comparison, and persistence-informed cleanup. No fake scientific
+  backend or precomputed output. Exactly21 paths/22 API operations.
+- Added cleanup endpoint, explicit selection reasons, thread-safe bounded
+  persistence evidence retention, optional compact ITRS persistence response
+  (actual samples; raw scientific samples explicitly omitted), encounter
+  pagination/time filters. Existing default scientific contracts retained.
+- Configurable process environment for cache/data/files/origins/host/port;
+  explicit local CORS, production defaults to no allowed browser origins,
+  wildcard origins rejected. No dotenv dependency/no auth claim. Two bounded
+  concurrent expensive calculations by default; immediate429 BUSY, no
+  unbounded calculation queue. Health/catalog browsing do not acquire slots.
+- New workflow/config/error tests **10 passed in8.68s**, exit0; targeted
+  existing regressions **49 passed in54.11s**, exit0. Invalid/no-data cases,
+  NASA reference calculations, CORS rejection and capacity release verified.
+- Actual process `../.venv/bin/python -m app.server` started with configurable
+  ephemeral port; health/OpenAPI/local CORS HTTP200, exactly21 paths. Owned
+  server stopped cleanly; no developer-specific path required.
+- User requested faster execution while retaining essential checks. Confirmed
+  4-core CPU quota/32GiB memory; ran the COMPLETE suite in3 disjoint processes
+  with BLAS/OMP threads1 (no changed physical models/assertions/time limits).
+  ShardA:15 passed/210.42s; B:31 passed/206.81s; C:392 passed/220.27s,
+  each exit0. JUnit union matches **all438 collected test IDs exactly**,
+  zero failures/errors/skips/duplicates/omissions. Verification harness first
+  compared before completing its loop; corrected indentation and reran,
+  exit0. This was a harness error, not a failed scientific result.
+- Shards: A=persistence_end_to_end,persistence_scenarios,decay_performance_fix;
+  B=secondary_integration,secondary_api_cli,screened_optimizer;
+  C=all remaining files. All upstream warnings remain disclosed.
+
 ## Phase 4 — Checkpoint policy
 
 The latest explicit user instruction and AGENTS.md require stopping at the

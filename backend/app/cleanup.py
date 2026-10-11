@@ -171,6 +171,7 @@ def optimize_cleanup_portfolio(candidate_objects,constraints=None,priorities=Non
         targets_remaining=constraints.max_targets-len(chosen),total_abstract_resource_expenditure=spent,
         budget_remaining=None if constraints.effort_budget is None else constraints.effort_budget-spent,
         excluded_objects=excluded,unique_screening_encounters_represented=len(events),
+        selection_reasons={s.id:f'Eligible and rankable; additive proxy {s.score:.6g}; selected within the declared candidate pool and resource constraints ({status})' for s in selected},
         shared_screening_encounter_ids=sorted(k for k,v in events.items() if v > 1),policy=policy,constraints=constraints,
         coverage=coverage or {},model_assumptions=["ILLUSTRATIVE POLICY CHOICE — additive priority proxy, not a mission plan or scientifically universal weighting.",
             "Exposure=min(count/saturation,1); persistence=min(modeled days/saturation,1); RCS=min(log1p(RCS)/log1p(saturation),1).",
@@ -183,6 +184,11 @@ def optimize_cleanup_portfolio(candidate_objects,constraints=None,priorities=Non
 
 
 def record_persistence_evidence(engine,result):
+    with engine._evidence_lock:
+        _record_persistence_evidence(engine,result)
+
+
+def _record_persistence_evidence(engine,result):
     engine.persistence_evidence.pop(result.object_id,None)
     if result.scenario_analysis is None: return
     nominal = next((s for s in result.scenario_analysis.scenarios if s.scenario == "NOMINAL"),None)
@@ -225,7 +231,8 @@ def analyze_cleanup(engine,constraints=None,policy=None,candidate_ids=None,now=N
         truncated = max(0,len(eligible)-len(records))
         missing = {}
         if truncated: warnings.append("Candidate pool truncated by workload bound, stable NORAD-ID order; not a global ranking of all debris. Supply explicit candidate_ids to choose assessment scope.")
-    candidates,screening = build_candidates(records,metadata,dataset,engine.persistence_evidence,now)
+    with engine._evidence_lock: evidence=dict(engine.persistence_evidence)
+    candidates,screening = build_candidates(records,metadata,dataset,evidence,now)
     coverage = {"catalog":catalog.metadata.model_dump(mode="json"),"screening":screening,
         "classification":None if metadata is None else metadata.provenance,"candidate_pool_truncated":truncated,
         "scope":"Explicit selected IDs" if candidate_ids is not None else "Bounded eligible public catalog subset, ascending NORAD ID"}

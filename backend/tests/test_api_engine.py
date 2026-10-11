@@ -77,7 +77,7 @@ def test_every_endpoint_runs_real_engine(client, monkeypatch):
         "/api/space-weather/status", "/api/atmosphere/density", "/api/objects/{object_id}/decay",
         "/api/objects/{object_id}/persistence", "/api/objects", "/api/positions",
         "/api/objects/{object_id}/metadata", "/api/objects/{object_id}/trajectory",
-        "/api/encounters/{encounter_id}/trajectories"}
+        "/api/encounters/{encounter_id}/trajectories", "/api/cleanup/optimize"}
     object_ref = schema["paths"]["/api/objects/{object_id}"]["get"]["responses"]["200"]["content"]["application/json"]["schema"]["$ref"]
     object_schema = schema["components"]["schemas"][object_ref.rsplit("/", 1)[-1]]
     elements_ref = object_schema["properties"]["elements"]["$ref"]

@@ -9,6 +9,7 @@ from email.utils import parsedate_to_datetime
 import io
 import math
 import threading
+from pathlib import Path
 from typing import Literal
 
 import httpx
@@ -108,17 +109,27 @@ def parse_metadata(record,mode="CACHE"):
 
 
 class MetadataClient:
-    def __init__(self,cache,http=None):
+    def __init__(self,cache,http=None,local_file=None):
         self.cache,self.http = cache,http
         self.dataset = None
         self._blocked_error = None
         self._lock = threading.Lock()
+        self.local_file = local_file
 
     def load(self,now=None):
         now = now or datetime.now(UTC)
         if now.tzinfo is None:
             raise ValueError("Metadata retrieval time must be aware")
         with self._lock:
+            if self.local_file is not None:
+                if self.dataset is None:
+                    path=Path(self.local_file).resolve()
+                    try:
+                        record=make_record(path.read_text(),path.as_uri(),now,datetime.fromtimestamp(path.stat().st_mtime,UTC),'LOCAL_FILE_MTIME')
+                        self.dataset=parse_metadata(record,'LOCAL')
+                        self.dataset.warnings.append('Explicit local/offline SATCAT snapshot, not live metadata; file mtime is not a verified publication date.')
+                    except (OSError,ValueError) as error: raise MetadataUnavailable(f'Invalid configured SATCAT file: {error}') from error
+                return self.dataset
             if self.dataset is not None and now-datetime.fromisoformat(self.dataset.provenance["fetched_at"]) < timedelta(days=1):
                 return self.dataset
             stored = self.cache.read(SATCAT_URL)

@@ -1,6 +1,7 @@
 from fastapi import APIRouter,Depends,Query
 from pydantic import AwareDatetime
 from app.api.routes import get_engine
+from app.api.limits import calculation_slot
 from app.engine import Engine
 from app.data.metadata import ObjectClassification
 from app.models.visualization import (CatalogPage,ObjectInfo,PositionRequest,PositionBatch,ObjectTrajectory,
@@ -33,6 +34,6 @@ def encounter_paths(encounter_id: str,half_window_seconds: float=Query(300,gt=0,
     sample_count: int=Query(121,ge=2,le=1001),engine: Engine=Depends(get_engine)):
     return encounter_trajectories(engine,encounter_id,half_window_seconds,sample_count)
 
-@router.post('/encounters/{encounter_id}/trajectories',response_model=ManeuverTrajectories)
+@router.post('/encounters/{encounter_id}/trajectories',response_model=ManeuverTrajectories,dependencies=[Depends(calculation_slot)])
 def maneuver_paths(encounter_id: str,request: ManeuverTrajectoryRequest,engine: Engine=Depends(get_engine)):
     return maneuver_trajectories(engine,encounter_id,request)

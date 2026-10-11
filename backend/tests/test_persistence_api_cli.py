@@ -74,7 +74,7 @@ def test_missing_properties_and_density_invalid_inputs(api):
 
 def test_openapi_all_local_references_resolve(api):
     schema = api[0].get("/openapi.json").json()
-    assert len(schema["paths"]) == 20
+    assert len(schema["paths"]) == 21
     def walk(node):
         if isinstance(node,dict):
             if "$ref" in node:
