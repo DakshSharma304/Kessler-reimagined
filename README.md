@@ -31,6 +31,76 @@ All **nine Phase 3 checkpoints passed**. Final complete suite: **302 passed,
 2 upstream warnings in 297.29 seconds**—all 197 prior tests plus 105 new tests,
 with zero failed, skipped or deselected tests.
 
+## Phase 5 — frontend integration
+
+Backend-only Phase 5 integrates the existing scientific engines with a
+visualization-ready catalog, optional compact persistence trajectories and a
+transparent debris-cleanup priority/portfolio MVP. No frontend is implemented.
+**All six Phase5 checkpoints passed: 445 automated tests, no skipped tests;
+all six real public API workflows and four NASA reference Pc comparisons pass.**
+KESSLER BACKEND: FRONTEND READY.
+The exact handoff is [FRONTEND_CONTRACT.md](FRONTEND_CONTRACT.md): all21 paths/
+22 operations, request/response schemas, six actual workflow examples, units,
+statuses, CORS and workload bounds. [openapi.json](openapi.json) matches the
+running app. [frontend_examples.json](frontend_examples.json) is a dated HTTP
+transcript, not permanently current orbital data. See `CHECKPOINTS.md` for gates.
+
+From the installed repository, with the backend running separately:
+
+```sh
+cd backend
+../.venv/bin/python -m app.frontend_smoke --base-url http://127.0.0.1:8000
+# Actual six-workflow/nine-operation HTTP benchmark:
+../.venv/bin/python scripts/benchmark_frontend.py --base-url http://127.0.0.1:8000
+# Regenerate OpenAPI and the contract's schema appendix:
+../.venv/bin/python -m app.export_frontend
+```
+
+See [PERFORMANCE.md](PERFORMANCE.md) and [performance.json](performance.json)
+for measured workloads, times and scientific validation. Run the complete suite
+using `../.venv/bin/python -m pytest -q --maxfail=1` from backend.
+
+Environment configuration (not automatically loaded from `.env`):
+`KESSLER_HOST`, `KESSLER_PORT`, `KESSLER_CACHE_DIR`, `KESSLER_DATA_DIR`,
+`KESSLER_CATALOG_FILES` (JSON array of actual local OMM paths),
+`KESSLER_METADATA_FILE` (optional SATCAT CSV), `KESSLER_ALLOWED_ORIGINS`
+(JSON array of exact HTTP(S) origins), `KESSLER_ENV=production` and
+`KESSLER_MAX_CALCULATIONS` (default2, range1..8). See `backend/.env.example`.
+Production defaults to no browser origins; configure the actual frontend
+origin. Local defaults permit localhost/127.0.0.1 on ports5173/3000.
+No authentication: CORS is not access control. Paths are configurable; no
+developer-specific filesystem path is needed. Startup downloads no datasets.
+
+Visualization positions are **ITRS/ECEF kilometers**, aware UTC ISO8601;
+Three.js right-handed Y-up uses `(x,z,-y)` with a consistent display scale.
+Actual SGP4 TEME and numerical GCRS states are transformed, never relabeled.
+Bulk requests accept up to2000 IDs, paths up to1001 samples, single-object
+orbit intervals up to24hours. Per-object failures have null positions/status.
+Existing scientific SI/TEME/GCRS contracts remain unchanged. Public snapshots
+are reused for at most five minutes across browsing and matching default
+screening scopes; custom/local scopes retain their requested populations.
+Original source timestamps/checksums, old GP epoch checks and warnings remain.
+
+Cleanup is an illustrative additive policy proxy, not a removal mission plan
+or expected collisions prevented. Supported debris/rocket-body classifications
+only; unknown mass/area/dimensions stay null. Default weights use capped
+SOCRATES counts over its limited published screening window. Optional
+persistence/RCS evidence is explicit; missing weighted evidence does not
+fabricate a score. Fixed-count selection is stable; user-supplied heterogeneous
+abstract effort budgets use bounded binary HiGHS selection. Costs are not
+dollars and shared events are not independent prevented-collision benefits.
+Candidate scope, exclusions and selection reasons accompany each portfolio.
+
+Live SOCRATES lacks measured covariance-based Pc; its maximum screening metric
+stays separate. User covariance/aerodynamic/weather assumptions are illustrative;
+fixed-covariance maneuver Pc is not operationally calibrated. Catalog coverage
+is PARTIAL; bounded secondary screening can be INCOMPLETE, not a safety pass.
+Lifetimes are censored when the boundary is not reached. Ordinary browsing
+performs no atmospheric propagation. No verified fully offline six-workflow
+server mode exists: genuine local/NASA fixtures support component development
+and are labeled historical/offline, not live. Expensive calls are bounded,
+synchronous: show waiting, handle429 BUSY and configure request/proxy timeouts.
+
 ## Install
 
 From the repository root:
@@ -44,7 +114,7 @@ python3.12 -m venv .venv
 
 ```sh
 cd backend
-../.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+../.venv/bin/python -m app.server
 ```
 
 The health endpoint is `GET /api/health`; interactive API documentation is at
@@ -67,6 +137,13 @@ The health endpoint is `GET /api/health`; interactive API documentation is at
 | POST | `/api/atmosphere/density` | Actual NRLMSIS 2.1 density from explicit/source weather |
 | POST | `/api/objects/{id}/decay` | Bounded gravity/J2/drag propagation and boundary status |
 | POST | `/api/objects/{id}/persistence` | Same propagation with scenario/persistence metrics |
+| GET | `/api/objects` | Paginated/searchable/classified catalog and coverage |
+| POST | `/api/positions` | Bounded bulk ITRS/ECEF positions in km |
+| GET | `/api/objects/{id}/metadata` | Joined metadata and provenance |
+| GET | `/api/objects/{id}/trajectory` | Sampled real orbit in ITRS/km |
+| GET | `/api/encounters/{id}/trajectories` | Nominal participant paths in ITRS/km |
+| POST | `/api/encounters/{id}/trajectories` | Matched baseline/modified maneuver paths in ITRS/km |
+| POST | `/api/cleanup/optimize` | Explained, bounded additive-priority portfolio |
 
 An unknown encounter returns 404. Invalid requests and unsupported scientific
 inputs return 422; unavailable source/orbital data return 503 with an explicit

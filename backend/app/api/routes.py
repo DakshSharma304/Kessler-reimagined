@@ -122,7 +122,7 @@ def optimize(encounter_id: str, request: OptimizeRequest, engine: Engine = Depen
     case = engine.selected_case(encounter_id)
     if request.secondary_screening is None:
         return optimize_maneuver(*case, constraints, request.search)
-    catalog = engine.catalog.load_screening_catalog(request.secondary_screening.catalog_selection)
+    catalog = engine.screening_catalog(request.secondary_screening.catalog_selection)
     return optimize_with_secondary_screening(*case, constraints, request.search,
         secondary_settings=request.secondary_screening, catalog=catalog,
         cache=engine.catalog_propagation_cache)
@@ -135,7 +135,7 @@ def screen(encounter_id: str, request: ScreenRequest, engine: Engine = Depends(g
     settings = ScreeningRequest.model_validate(request.model_dump() | {"encounter_id":encounter_id})
     case = engine.selected_case(encounter_id)
     settings.screening_window(case[0])  # Validate before any bulk download.
-    catalog = engine.catalog.load_screening_catalog(settings.catalog_selection)
+    catalog = engine.screening_catalog(settings.catalog_selection)
     return screen_proposed_maneuver(*case, settings, catalog, cache=engine.catalog_propagation_cache)
 
 

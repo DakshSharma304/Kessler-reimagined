@@ -176,6 +176,70 @@ Current API request/response schemas (actual OpenAPI references; none invented):
   live-backend claim. Root example transcript is an explicitly dated
   integration deliverable, not a download cache or current live guarantee.
 
+### Checkpoint 6 — PASSED — KESSLER BACKEND: FRONTEND READY
+
+- Final actual public API integration at2026-10-11T10:38UTC (06:38EDT): all
+  six workflows passed, 30 actual HTTP responses validated against current
+  FastAPI models. Repeated standalone `python -m app.frontend_smoke --base-url
+  http://127.0.0.1:8015` also exited0. No frontend or new scientific phase.
+- Real CelesTrak five-group catalog refreshed over HTTP at10:38:09UTC,
+  19,505 records; PARTIAL coverage and207 old epochs retained/disclosed.
+  1,200 actual finite SGP4/Astropy ITRS/km positions. Search/select/details,
+  orbit/encounter/maneuver trajectories work with bounded payloads.
+- Actual SOCRATES encounter `socrates-599855ce2ca729ae50cb34e9` selected,
+  analyzed, optimized (13 evaluations), two alternatives screened; both
+  INCOMPLETE within max128-object/5s bounds, never claimed safe. Live Pc
+  unavailable without covariance; source screening maximum separate.
+  Explicit covariance and fixed-covariance maneuver scenarios illustrative.
+- All four independent NASA API reference comparisons pass unchanged2e-9
+  relative tolerance; maximum actual relative discrepancy1.2418621604014618e-10.
+  Pc values/fixture stems/provenance in PERFORMANCE.md/performance.json.
+  Actual MSIS three atmospheric scenarios/compact ITRS paths work; actual
+  source-weather cache (observed/forecast qualifiers preserved) also loaded
+  and actual-source density calculated. No invented aerodynamic properties.
+- Explicit five-debris pool cleanup selects29734/29737 under max2targets;
+  proxy policy/scope/unknown mass/exclusions/reasons disclosed. Never a
+  removal mission plan, dollar return or precise collision-prevention estimate.
+- Investigated repeated public-screen catalog parsing: matching default
+  scope now reuses existing five-minute snapshot, with original data epochs,
+  provenance, staleness checks and warnings. Custom/local scopes unchanged.
+  Three new genuine-input tests verify identity/expiry/fingerprint/scope/local
+  isolation/status. Entire targeted API/handoff/secondary gate31 passed,
+  2 upstream warnings/35.84s, exit0. No physics/assertion/cap changes.
+- Reproducible `scripts/benchmark_frontend.py` ran all six real workflows
+  then3 warm HTTP trials per operation before concurrent regression load.
+  Warm medians seconds: catalog search.010600; positions1200 .064365;
+  orbit21samples .006758; encounter.007710; optimize13 .245380;
+  bounded screen.090469; NASA Pc.018017; persistence3x.001day .150503;
+  cleanup5pool 1.005915. First screen3.701s, second.077s; repeated geometry
+  benefits from verified propagation cache too. Legacy skipped-object list
+  explains~0.8MB screen output; contract retained and frontend display advice
+  documented. These are measured bounded workloads, not latency promises.
+- Final COMPLETE suite: shardA15 passed/180.53s; B31 passed/134.84s;
+  C399 passed/206.85s; each exit0. Exact JUnit union equals **all445 collected
+  test IDs**, zero failures/errors/skips/duplicates/omissions. All397 original
+  Phase4 tests plus48 Phase5 tests executed. Pipcheck no broken requirements.
+  Remaining warnings are upstream AnyIO and optional read-only Astropy cache;
+  offline installed IERS remains active, no download or precision fabrication.
+- README updated; FRONTEND_CONTRACT.md complete; actual openapi.json exported
+  again (21 paths/22operations/83schemas) and matches running app; all schema
+  refs/documented routes/60 captured example responses validated. No hardcoded
+  developer paths, outputs, credentials, frontend or dependencies added.
+- Cloud setup skill saved verified existing-environment startup/smoke/check
+  instructions in start_skill only. Draft status saved/requires_publish=true;
+  no claim of publication or validation in a new cloud task. Other environment
+  configuration preserved. No install needed in this prepared environment.
+
+- Final post-documentation/export artifact check: all7 handoff/cache tests
+  passed, 2 upstream warnings/7.17s, exit0. Final diffcheck clean. Both actual
+  server processes owned by this task shut down after verification; no running
+  process is assumed to persist into a future environment.
+
+All six Phase5 mandatory checkpoints PASSED. Actual-source coverage, unavailable
+covariance/physical metadata, fixed-covariance/drag assumptions, censored lifetime,
+incomplete secondary screening, synchronous workload limits and no full offline
+live mode remain explicit. Git publication is performed after this verified gate.
+
 ## Phase 4 — Checkpoint policy
 
 The latest explicit user instruction and AGENTS.md require stopping at the

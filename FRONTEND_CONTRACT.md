@@ -1,8 +1,8 @@
 # Kessler frontend integration contract
 
 Backend only. No frontend or JavaScript orbital physics is included.
-This contract is an integration specification; readiness is claimed only after
-the final checkpoint passes. Scientific limitations must remain visible in UI.
+All six Phase5 checkpoints passed: 445 automated tests and all six actual public
+API workflows verified. Scientific limitations must remain visible in UI.
 
 ## Startup and configuration
 
@@ -61,7 +61,10 @@ Earth-fixed. Unknown fields are generally rejected on calculation inputs.
 
 GET health/status/catalog-status do not download live sources. First catalog or
 encounter request may parse/download substantial public datasets; show loading
-state. Catalog status reports last loaded catalog, which may be a screening
+state. Browsing and exactly matching default public screening scopes reuse a
+five-minute in-memory snapshot; custom/local scopes retain their requested
+populations. This never refreshes source timestamps or removes stale-element
+warnings. Catalog status reports last loaded catalog, which may be a screening
 scope, so use each result's own catalog metadata for its authoritative coverage.
 
 ## Units, time and Three.js coordinate contract
@@ -222,7 +225,10 @@ Use explicit short horizons for interactive scenarios, show progress/waiting
 state and configure HTTP/proxy timeouts accordingly. Do not calculate decay
 on catalog page load. Raw scientific persistence can contain up to20000samples/
 scenario; prefer visualization compact mode. Final measured workloads are
-recorded in CHECKPOINTS.md, not universal latency promises.
+recorded in CHECKPOINTS.md and PERFORMANCE.md (raw performance.json), not
+universal latency promises. Screening responses retain per-object skipped
+reasons and may be about0.8MB for the measured bounded public scope; the
+frontend should summarize rather than render every skipped object by default.
 
 GP sources have URLs/checksums/fetched_at/element epochs, catalog snapshot hash,
 coverage PARTIAL/freshness FRESH/STALE/UNAVAILABLE, failed sources and limitations.
@@ -242,6 +248,8 @@ coordinate precision; no calibrated operational safety claim.
 ../.venv/bin/python -m app.frontend_smoke --record-examples ../frontend_examples.json
 # Regenerate the actual schema and this schema appendix:
 ../.venv/bin/python -m app.export_frontend
+# Actual live integration plus three warm trials per measured operation:
+../.venv/bin/python scripts/benchmark_frontend.py --base-url http://127.0.0.1:8000
 ```
 
 The checked-in `frontend_examples.json` is an **actual dated API transcript**,

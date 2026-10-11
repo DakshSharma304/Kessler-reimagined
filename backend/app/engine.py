@@ -53,3 +53,15 @@ class Engine:
         encounter = self.discovery.get_encounter(identifier)
         first, second = self.celestrak.get_encounter_objects(encounter)
         return encounter, first, second
+
+    def screening_catalog(self, selection: CatalogSelection):
+        """Reuse the bounded public snapshot only for exactly the same scope.
+
+        Local browsing configuration must never silently replace a requested
+        public screening scope. Custom/local scopes retain the existing loader.
+        """
+        if not self.config.catalog_files and selection == CatalogSelection():
+            catalog = self.public_catalog()
+            self.catalog.last_catalog = catalog
+            return catalog
+        return self.catalog.load_screening_catalog(selection)
