@@ -1,17 +1,82 @@
-import {test,expect} from '@playwright/test';
-test('editable constraints, actual optimizer, alternatives, matched paths and screening',async({page})=>{
- const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
- await page.goto('/');await page.getByRole('button',{name:'Close approaches',exact:true}).click();await page.getByLabel('Search encounters').fill('27056');await expect(page.locator('.encounter-row').first()).toContainText('COSMOS',{timeout:60000});await page.locator('.encounter-row').first().click();await page.getByRole('button',{name:'Analyze maneuver',exact:true}).click();
- await expect(page.getByRole('button',{name:'Find best maneuvers'})).toBeDisabled();await page.getByLabel('I explicitly assume').check();
- await page.getByLabel('Maximum delta-v · m/s',{exact:true}).fill('.1');const optimized=page.waitForResponse(r=>r.url().endsWith('/optimize')&&r.ok());const trajectories=page.waitForResponse(r=>r.url().endsWith('/trajectories')&&r.request().method()==='POST'&&r.ok());await page.getByRole('button',{name:'Find best maneuvers'}).click();
- const response=await optimized;const data=await response.json();expect(response.request().postDataJSON().max_delta_v_m_s).toBe(.1);expect(data.solutions.length).toBeGreaterThan(1);const paths=await (await trajectories).json();expect(paths.numerical_reference_epoch).toBe(data.numerical_reference_epoch);expect(paths.modified.frame).toBe('ITRS');
- await expect(page.getByText('Modified separation',{exact:true})).toBeVisible();const nextPath=page.waitForResponse(r=>r.url().endsWith('/trajectories')&&r.ok());await page.getByRole('button',{name:/Solution 2/}).click();expect((await (await nextPath).json()).simulation.delta_v_rtn_m_s).toEqual(data.solutions[1].delta_v_rtn_m_s);
- await page.getByRole('button',{name:'Baseline',exact:true}).click();await expect(page.getByRole('button',{name:'Baseline',exact:true})).toHaveAttribute('aria-pressed','true');await page.getByRole('button',{name:'Overlay',exact:true}).click();
- const epochBefore=await page.locator('canvas').getAttribute('data-track-epochs');const earliest=await page.getByLabel('Prediction time').getAttribute('min');await page.getByLabel('Prediction time').fill(earliest!);await expect.poll(()=>page.locator('canvas').getAttribute('data-track-epochs')).not.toBe(epochBefore);await page.getByRole('button',{name:'Reset time'}).click();
- const screen=page.waitForResponse(r=>r.url().endsWith('/screen')&&r.ok());await page.getByRole('button',{name:'Screen selected alternative',exact:true}).click();const screened=await (await screen).json();expect(screened.objects_screened).toBeGreaterThan(0);await expect(page.getByText(screened.screening_status,{exact:true})).toBeVisible();
- await page.getByLabel('Maximum delta-v · m/s',{exact:true}).fill('.2');const second=page.waitForResponse(r=>r.url().endsWith('/optimize')&&r.ok());await page.getByRole('button',{name:'Find best maneuvers'}).click();expect((await second).request().postDataJSON().max_delta_v_m_s).toBe(.2);
- expect(errors).toEqual([]);await page.screenshot({path:'test-results/checkpoint4-planner.png'});
+import { test, expect } from '@playwright/test';
+test('editable constraints, actual optimizer, alternatives, matched paths and screening', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (m) => {
+    if (m.type() === 'error') errors.push(m.text());
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Close approaches', exact: true }).click();
+  await page.getByLabel('Search encounters').fill('27056');
+  await expect(page.locator('.encounter-row').first()).toContainText('COSMOS', { timeout: 60000 });
+  await page.locator('.encounter-row').first().click();
+  await page.getByRole('button', { name: 'Analyze maneuver', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Find best maneuvers' })).toBeDisabled();
+  await page.getByLabel('I explicitly assume').check();
+  await page.getByLabel('Maximum delta-v · m/s', { exact: true }).fill('.1');
+  const optimized = page.waitForResponse((r) => r.url().endsWith('/optimize') && r.ok());
+  const trajectories = page.waitForResponse(
+    (r) => r.url().endsWith('/trajectories') && r.request().method() === 'POST' && r.ok(),
+  );
+  await page.getByRole('button', { name: 'Find best maneuvers' }).click();
+  const response = await optimized;
+  const data = await response.json();
+  expect(response.request().postDataJSON().max_delta_v_m_s).toBe(0.1);
+  expect(data.solutions.length).toBeGreaterThan(1);
+  const paths = await (await trajectories).json();
+  expect(paths.numerical_reference_epoch).toBe(data.numerical_reference_epoch);
+  expect(paths.modified.frame).toBe('ITRS');
+  await expect(page.getByText('Modified separation', { exact: true })).toBeVisible();
+  const nextPath = page.waitForResponse((r) => r.url().endsWith('/trajectories') && r.ok());
+  await page.getByRole('button', { name: /Solution 2/ }).click();
+  expect((await (await nextPath).json()).simulation.delta_v_rtn_m_s).toEqual(
+    data.solutions[1].delta_v_rtn_m_s,
+  );
+  await page.getByRole('button', { name: 'Baseline', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Baseline', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.getByRole('button', { name: 'Overlay', exact: true }).click();
+  const epochBefore = await page.locator('canvas').getAttribute('data-track-epochs');
+  const earliest = await page.getByLabel('Prediction time').getAttribute('min');
+  await page.getByLabel('Prediction time').fill(earliest!);
+  await expect
+    .poll(() => page.locator('canvas').getAttribute('data-track-epochs'))
+    .not.toBe(epochBefore);
+  await page.getByRole('button', { name: 'Reset time' }).click();
+  const screen = page.waitForResponse((r) => r.url().endsWith('/screen') && r.ok());
+  await page.getByRole('button', { name: 'Screen selected alternative', exact: true }).click();
+  const screened = await (await screen).json();
+  expect(screened.objects_screened).toBeGreaterThan(0);
+  await expect(page.getByText(screened.screening_status, { exact: true })).toBeVisible();
+  await page.getByLabel('Maximum delta-v · m/s', { exact: true }).fill('.2');
+  await expect(
+    page.getByText(
+      'The controls have changed. These results use the previous constraints; run the optimizer again to update them.',
+    ),
+  ).toBeVisible();
+  const second = page.waitForResponse((r) => r.url().endsWith('/optimize') && r.ok());
+  await page.getByRole('button', { name: 'Find best maneuvers' }).click();
+  expect((await second).request().postDataJSON().max_delta_v_m_s).toBe(0.2);
+  expect(errors).toEqual([]);
+  await page.screenshot({ path: 'test-results/checkpoint4-planner.png' });
 });
-test('real zero-budget impossible target reports no feasible solution',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Close approaches',exact:true}).click();await page.getByLabel('Search encounters').fill('27056');await expect(page.locator('.encounter-row').first()).toContainText('COSMOS',{timeout:60000});await page.locator('.encounter-row').first().click();await page.getByRole('button',{name:'Analyze maneuver',exact:true}).click();await page.getByLabel('I explicitly assume').check();await page.getByLabel('Maximum delta-v · m/s',{exact:true}).fill('0');await page.getByLabel('Target separation · km',{exact:true}).fill('1000000');await page.getByLabel('Objective',{exact:true}).selectOption('MINIMUM_DELTA_V');await page.getByRole('button',{name:'Find best maneuvers'}).click();await expect(page.getByText('No feasible evaluated maneuver',{exact:true})).toBeVisible({timeout:60000});
+test('real zero-budget impossible target reports no feasible solution', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Close approaches', exact: true }).click();
+  await page.getByLabel('Search encounters').fill('27056');
+  await expect(page.locator('.encounter-row').first()).toContainText('COSMOS', { timeout: 60000 });
+  await page.locator('.encounter-row').first().click();
+  await page.getByRole('button', { name: 'Analyze maneuver', exact: true }).click();
+  await page.getByLabel('I explicitly assume').check();
+  await page.getByLabel('Maximum delta-v · m/s', { exact: true }).fill('0');
+  await page.getByLabel('Target separation · km', { exact: true }).fill('1000000');
+  await page.getByLabel('Objective', { exact: true }).selectOption('MINIMUM_DELTA_V');
+  await page.getByRole('button', { name: 'Find best maneuvers' }).click();
+  await expect(page.getByText('No feasible evaluated maneuver', { exact: true })).toBeVisible({
+    timeout: 60000,
+  });
 });

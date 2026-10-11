@@ -130,6 +130,35 @@ in this repository, Vercel frontend and Modal Python backend. No ChatGPT Sites.
   1.7FPS/5draw calls; hardware-browser performance remains to be profiled.
   Scientific Python engines, contracts and optimizer objective unchanged.
 
+### Checkpoint 6 — PASSED
+
+- Camera focus now keeps Earth and actual approach paths in frame; selected
+  marker has a restrained halo. Source/path focus and manual camera control
+  remain separate. Screenshots at 1440×900, 1920×1080, 1366×768 and 390×844
+  inspected; camera framing, stale overlays, form spacing and mobile panel
+  placement corrected from actual captures.
+- Mobile view changes expose the control sheet, completed analyses reopen the
+  inspector, the active horizontal navigation tab stays visible, and the globe
+  focus occupies the unobstructed upper area. Browser assertions found no
+  document overflow; controls remain usable at390×844. Keyboard `/` search,
+  Escape inspector, R Earth focus and Space playback exercised. Reduced-motion
+  emulation disabled transitions without blocking navigation or globe use.
+- Optimizer results disclose when primary constraints change after calculation.
+  Scenario chart transition is 180ms and disabled under reduced motion.
+  Source formatted with Prettier; formatting check passed. One client bundle
+  459.58kB/144.07kB gzip, lazy WebGL chunk932.09kB/253.47kB gzip;
+  oversized WebGL chunk is an acknowledged Three.js bundle cost, not hidden.
+- The first focused browser check reported the final active mobile tab0.2CSS
+  px beyond its scroll box due Chromium rounding. Read-only DOM measurements
+  showed x=288.484, width91.719, nav right380.000 with tab right380.203;
+  visual assertion permits1CSS px rounding. Full focused retest passed,
+  then the complete gate and prior frontend regressions passed.
+- Final full gate: formatting/typecheck/build exit0, **16 unit tests**/5.21s,
+  **11 real Chromium browser tests**/2.6min exit0; no valid-flow page/console
+  errors. Actual2000-object software SwiftShader scene measured3.4FPS,
+  6draw calls including selection halo. This is not hardware60FPS evidence;
+  demand rendering limits idle GPU work. No scientific backend changes.
+
 ## Phase 5 — Checkpoint policy and verified baseline
 
 Phase 5 follows the latest explicit user policy: diagnose/correct failures,
