@@ -33,6 +33,19 @@ class ManeuverError(RuntimeError):
     pass
 
 
+def gravity_components(position, pole):
+    """Existing WGS84 central gravity and J2, shared with optional decay physics."""
+    position = np.asarray(position, dtype=float)
+    radius = np.linalg.norm(position)
+    if radius <= 0 or not np.isfinite(position).all():
+        raise ManeuverError("Singular/nonfinite orbital state")
+    z = np.dot(position, pole)
+    central = -MU_EARTH * position / radius**3
+    j2 = 1.5 * J2 * MU_EARTH * EARTH_RADIUS**2 / radius**5 * (
+        (5 * (z / radius)**2 - 1) * position - 2 * z * pole)
+    return central, j2
+
+
 class ManeuverSimulation(BaseModel):
     model_config = ConfigDict(allow_inf_nan=False)
     encounter_id: str
@@ -75,13 +88,7 @@ class NumericalTrajectory:
             raise ManeuverError("Initial numerical state intersects Earth")
         def derivatives(_time, values):
             position = values[:3]
-            radius = np.linalg.norm(position)
-            if radius <= 0:
-                raise ManeuverError("Singular orbital state")
-            z = np.dot(position, self.pole)
-            central = -MU_EARTH * position / radius**3
-            j2 = 1.5 * J2 * MU_EARTH * EARTH_RADIUS**2 / radius**5 * (
-                (5 * (z / radius)**2 - 1) * position - 2 * z * self.pole)
+            central, j2 = gravity_components(position, self.pole)
             return np.concatenate([values[3:], central + j2])
         def earth_intersection(_time, values):
             return np.linalg.norm(values[:3]) - EARTH_RADIUS

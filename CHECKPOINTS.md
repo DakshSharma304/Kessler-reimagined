@@ -108,6 +108,32 @@ Status: PASSED.
   Coordinate conversion is the measured propagation-performance concern;
   any future accelerated transforms must be independently validated.
 
+## Phase 4 — Checkpoint 4: atmosphere-relative drag physics
+
+Status: PASSED.
+
+- Added `app/physics/drag.py`: SI −½ρ(Cd*A/m)|v−ω×r|(v−ω×r), with unit
+  GCRS Earth pole and ω=7.292115e-5 rad/s. Co-rotation, not inertial orbital
+  speed, defines the drag direction. Atmospheric winds/attitude are not modeled.
+- Strict explicit properties require either supplied mass/area/Cd or Cd*A/m,
+  plus USER_SUPPLIED/HYPOTHETICAL_ASSUMPTION identity. No missing-property
+  defaults or BSTAR substitution. Zero area/density explicitly yields zero drag.
+- Extracted the existing central/J2 formulas into shared `gravity_components`
+  in the original maneuver module; NumericalTrajectory uses that same helper.
+  No new optimizer objective or default drag behavior.
+- Focused new drag plus original maneuver/optimizer suite:
+  **27 passed, 1 warning in 20.00 s**, exit 0. Includes physical scaling,
+  co-rotating zero-relative-velocity case, units/direction, invalid inputs,
+  deterministic force and exact (absolute 1e-7 state tolerance) zero-drag
+  integration agreement with the existing gravity/J2 numerical trajectory.
+- Original optimizer benchmark: **123 evaluations, 123 feasible, 0 numerical
+  failures**, COMPLETE, **3.743 s**, unchanged fixture clearance
+  **10,796.958 m** at 0.2 m/s.
+- Full `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **344 passed, 2 upstream warnings in 328.01 s**, exit 0. All 331 prior tests
+  rerun; no skips, deselections or assertion weakening. Decay propagation
+  began only after this gate passed.
+
 ## Phase 3 verified checkpoints
 
 ## Phase 3 — Checkpoint 1: preserve the existing backend
