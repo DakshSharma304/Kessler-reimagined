@@ -20,6 +20,16 @@ records and has explicitly **PARTIAL** coverage. Old/failed records and exhauste
 budgets produce `INCOMPLETE`, never a screening-policy pass.
 See `CHECKPOINTS.md` and `SECONDARY_SCREENING_DESIGN.md` for details.
 
+Phase 3 adds covariance-based collision probability (Pc): strict historical
+NASA CDM ingestion, per-object covariance transformations, deterministic
+Gaussian collision-disk integration, honest live availability, and optional
+illustrative fixed-covariance maneuver comparisons. The original simulator,
+clearance optimizer and default API/CLI responses are preserved. No frontend,
+decay model, cleanup optimization or extra dependencies were added.
+All **nine Phase 3 checkpoints passed**. Final complete suite: **302 passed,
+2 upstream warnings in 297.29 seconds**—all 197 prior tests plus 105 new tests,
+with zero failed, skipped or deselected tests.
+
 ## Install
 
 From the repository root:
@@ -51,6 +61,7 @@ The health endpoint is `GET /api/health`; interactive API documentation is at
 | POST | `/api/encounters/{id}/optimize` | Bounded search; optional `secondary_screening` settings |
 | POST | `/api/encounters/{id}/screen` | Compare nominal and differential post-burn trajectories |
 | GET | `/api/objects/{id}` | Selected GP record, epoch and provenance |
+| POST | `/api/probability/calculate` | Supplied common-frame Pc or explicit NASA reference benchmark |
 
 An unknown encounter returns 404. Invalid requests and unsupported scientific
 inputs return 422; unavailable source/orbital data return 503 with an explicit
@@ -128,6 +139,10 @@ API request can configure the bounded search; corresponding CLI flags include
 and `--refinement-evaluations`.
 
 ## Tests
+
+Phase 3 commands and scientific assumptions are documented below. All
+checkpoint evidence, including actual failure diagnoses and reruns, is in
+`CHECKPOINTS.md`.
 
 ```sh
 cd backend
@@ -527,3 +542,199 @@ trajectories, not fabricated live alerts: original clearance **10.000 m →
 1,024.273 m**, but third-object clearance **1,024.375 m → 9.999 m**. Exactly one
 `NEW_CLOSE_APPROACH` is detected, including regression cases with true minima
 just **0.2 ms** and **1.41 ms** from a shared coarse sample boundary.
+
+## Phase 3: covariance-aware collision probability
+
+Pc is the integral of a two-dimensional Gaussian encounter-plane density
+over the disk of the explicitly supplied combined hard-body radius. Kessler
+rotates each object's position covariance using **that object's own RTN/RIC
+basis**, expresses both in one frame, forms relative covariance, and projects
+perpendicular to relative velocity. The deterministic integrator uses a
+covariance eigenbasis, a stable analytical normal-CDF inner integral, and
+adaptive SciPy QUADPACK outer quadrature. It does not use Monte Carlo or
+hardcoded scientific answers.
+
+### Genuine historical NASA validation
+
+Four unmodified CDMs and the original reference workbook are bundled from
+NASA CARA commit `ce0f00722c56808755ee0adbe47a4e3d56439484`.
+See [fixture provenance](backend/app/probability/reference_data/PROVENANCE.md).
+These are **historical reference encounters, never live SOCRATES predictions**.
+No current CelesTrak elements are used to reconstruct their states.
+
+| NASA reference case | Precise published Pc2D | Largest observed relative difference |
+| --- | --- | --- |
+| Terra / Iridium 33 debris, 2021-03-24 | 0.021173811560368256 | 2.94e-13 |
+| Terra / SL-16 debris, 2022-09-28 | 0.00010824948102737557 | 8.17e-13 |
+| HST / Delta 2 rocket body, 2021-03-15 | 0.0006114793230828587 | 1.25e-10 |
+| Swift / Jilin-01 Gaofen 2A, 2022-04-07 | 0.0023236849651128103 | 8.74e-12 |
+
+Assertions use **2e-9 relative tolerance, no blanket absolute tolerance**;
+quadrature convergence is also verified at 1e-11. The CDM Pc headers have only
+four significant digits, so precise assertions use the workbook's Pc2D column.
+NASA's local linear TCA correction is applied; the original inertial
+covariances remain fixed over the actual sub-millisecond rounding correction.
+
+NASA's benchmark script explicitly disables density cross-correlation
+corrections even though the CDMs retain DCP metadata. Consequently the
+reference adapter requires explicit **independent benchmark acknowledgment**
+and warns that this is not operational risk for a correlated encounter.
+Normal calculations do not discard known correlations.
+
+From `backend/`, using your activated Python environment (or substitute
+`../.venv/bin/python` for `python` with the repository-root environment):
+
+```sh
+python -m app.cli probability --list-reference-cases
+python -m app.cli probability \
+  --reference-case 000025994_conj_000037558_20210324_151047_20210323_154356 \
+  --independent-benchmark
+python -m app.cli --json probability \
+  --reference-case 000025994_conj_000026980_20220928_223445_20220924_220647 \
+  --independent-benchmark
+```
+
+The CLI shows published precise Pc, rounded CDM Pc, independently calculated
+Kessler Pc, numerical difference, TCA correction and assumptions.
+
+With the API running, historical reference evaluation is:
+
+```sh
+curl -sS http://127.0.0.1:8000/api/probability/calculate \
+  -H 'Content-Type: application/json' \
+  -d '{"reference_case":"000025994_conj_000037558_20210324_151047_20210323_154356","independent_benchmark":true}'
+```
+
+### Direct supplied geometry and covariance
+
+`POST /api/probability/calculate` also accepts `kind` (`SUPPLIED` or `ASSUMED`),
+aware `tca`, common inertial `frame`, `relative_position_m`,
+`relative_velocity_m_s`, `covariance_primary_m2`, `covariance_secondary_m2`,
+and positive `combined_hard_body_radius_m`. All matrices are 3x3 SI m².
+Direct requests require covariances already in the stated common Cartesian
+frame; RTN/RIC matrices instead require object states, provided by the live
+encounter adapter or the NASA reader. EME2000/GCRF labels are never substituted
+for GCRS. Existing Astropy TEME/GCRS conversions are used where supported.
+
+Optional `correlation` is `UNSPECIFIED`, `INDEPENDENT` or `CORRELATED`;
+`cross_covariance_m2` is Cov(primary,secondary) in the same frame and epoch.
+When present, relative covariance is P1+P2−C12−C12ᵀ and the joint covariance
+must be PSD. Known correlation without cross-covariance is unsupported.
+Unspecified correlations carry a disclosed independence assumption.
+
+The bundled input below is **synthetic illustrative geometry and explicitly
+assumed uncertainties**, not observations or a fabricated current conjunction.
+Its calculated scenario Pc is approximately 0.000678365289.
+
+```sh
+python -m app.cli --json probability --input-file examples/probability-direct.json
+curl -sS http://127.0.0.1:8000/api/probability/calculate \
+  -H 'Content-Type: application/json' --data-binary @examples/probability-direct.json
+```
+
+The result includes Pc, encounter-plane miss vector and covariance, combined
+radius, numerical method/status, quadrature error estimate, conditioning,
+assumptions and warnings. Invalid or missing critical request fields return
+HTTP 422. Scientifically unsupported cases return explicit `UNSUPPORTED_MODEL`
+and null Pc. Numerical underflow is explicitly identified, not evidence that
+a collision is impossible.
+
+### Live SOCRATES availability and scenarios
+
+SOCRATES does not supply the object covariances needed for covariance-based
+Pc. `MAX_PROB` remains separately available and is **not** true/calibrated Pc.
+Actual verified live case `socrates-f3f9e438db4c8a81fa4b93e5` reported MAX_PROB
+1.0 and Pc `UNAVAILABLE_NO_COVARIANCE`. Encounter IDs/data change over time.
+
+```sh
+python -m app.cli --json list --object-id 53495 --sort minimum_separation --limit 1
+python -m app.cli probability --encounter-id ENCOUNTER_ID
+python -m app.cli --json analyze --encounter-id ENCOUNTER_ID --probability
+curl -sS http://127.0.0.1:8000/api/encounters/ENCOUNTER_ID/analyze \
+  -H 'Content-Type: application/json' -d '{"probability_analysis":true}'
+```
+
+The optional analysis response adds `probability_analysis` with:
+
+- `probability_status`: `CALCULATED_FROM_SUPPLIED_COVARIANCE`,
+  `SCENARIO_WITH_ASSUMED_COVARIANCE`, `UNAVAILABLE_NO_COVARIANCE`,
+  `UNAVAILABLE_INVALID_COVARIANCE` or `UNSUPPORTED_MODEL`;
+- `socrates_max_probability`: actual source metric, separately preserved;
+- `calculated_pc`: null when unavailable or unsupported;
+- assumptions, warnings, covariance treatment, TCA/frame and numerical details.
+
+Live covariance-file/API input contains `kind`, `primary` and `secondary`
+records (`matrix_m2`, explicit `frame`, aware `epoch`), and
+`combined_hard_body_radius_m`. Optional object IDs are checked against the
+selected pair. Both epochs must equal **the analyzed TCA** returned by the
+baseline request; an original/published TCA is not silently substituted.
+Covariance propagation is unavailable. Use only your own supplied matrices or
+explicit assumptions; Kessler generates none automatically.
+
+```sh
+python -m app.cli probability --encounter-id ENCOUNTER_ID --covariance-file uncertainty.json
+```
+
+For the API, put the same object under `probability_inputs` in the analyze
+request. `kind: "ASSUMED"` produces the exact label:
+`ILLUSTRATIVE — USER-SUPPLIED UNCERTAINTY ASSUMPTIONS.`
+`SUPPLIED` identifies user-supplied covariance, not verified provenance,
+covariance realism or operational calibration.
+
+### Maneuver comparisons: fixed covariance only
+
+Add `fixed_covariance: true` to a copy of the live covariance input file and
+use it as `--probability-scenario-file` on the existing `simulate` command,
+or as `probability_scenario` in the simulate API body. The original covariance
+epoch must match `sgp4_reference.calculated.tca` (the original analyzed TCA).
+Existing burn inputs and capability acknowledgment are still required.
+
+```sh
+python -m app.cli --json simulate --encounter-id ENCOUNTER_ID --object-id NORAD_ID \
+  --maneuver-time FUTURE_UTC_TIMESTAMP --delta-v-rtn 0 0.1 0 --assume-capability \
+  --probability-scenario-file fixed-uncertainty.json
+```
+
+The original per-object RTN matrices are transformed once, then frozen in
+GCRS—not reoriented along a changed orbit as if propagated. The existing
+matched numerical baseline and post-burn trajectories provide separate actual
+TCA/relative geometry. `probability_comparison` reports original/published,
+baseline and modified TCAs, covariance epoch/treatment, offsets, baseline Pc,
+modified scenario Pc and delta Pc. **Both probabilities are illustrative**,
+even if original covariance was supplied, because its validity at a changed
+TCA is not established. No Pc-based search or default objective change exists.
+
+### Exact assumptions, limitations and runtime
+
+The model assumes short rectilinear relative motion, stationary Gaussian
+position uncertainties, compatible common-frame/epoch SI states and matrices,
+and an explicitly supplied combined spherical collision radius. Independence
+is assumed only when unspecified or explicitly selected; established
+correlations require cross-covariance. Velocity uncertainty, uncertainty
+propagation, execution error, covariance realism, non-Gaussian tails and object
+shape/orientation are not modeled. Instantaneous inputs cannot prove physical
+rectilinear applicability; known long-duration/curved cases must set
+`model_applicable: false` and are unsupported. No 3D/long-term Pc is provided.
+
+Invalid covariance is never repaired by arbitrary eigenvalue clipping.
+Zero/near-zero relative velocity, singular projected covariance and projected
+condition number above 1e12 are unsupported. PSD symmetry/roundoff tolerance
+is documented in the covariance module. Numerical accuracy is **quadrature
+accuracy only**, not input/frame roundoff or a physical confidence bound.
+No result is a flight command or operational safety guarantee.
+
+Actual-machine benchmark: 30 calculations per NASA case (120 total), median
+**1.32–1.66 ms**, 95th percentile **1.90–3.04 ms**, excluding import, parsing,
+frame conversion and transport. Results depend on hardware/load. Reproduce:
+
+```sh
+python -m pytest tests/test_probability_reference.py -v -s
+python -m pytest tests/test_probability_end_to_end.py -v -s
+python -m pytest -q --maxfail=1
+```
+
+The end-to-end tests cover actual NASA CLI processes and uvicorn HTTP requests,
+live SOCRATES/GP geometry, illustrative anisotropic uncertainty and maneuver
+comparison, and existing clearance optimization plus secondary screening.
+Partial catalog coverage/time limits still produce INCOMPLETE screening,
+never a safety pass. Final checkpoint totals are recorded in `CHECKPOINTS.md`.

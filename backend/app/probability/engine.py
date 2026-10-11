@@ -63,6 +63,7 @@ def calculate_collision_probability(relative_position, relative_velocity,
         "Covariances and relative states share one inertial frame, epoch and SI units.",
         "Velocity uncertainty, covariance evolution, shape/orientation and non-Gaussian errors are not modeled."]
     warnings = ["Numerical error estimates are not physical uncertainty bounds or an operational safety guarantee.",
+        "Estimated absolute error covers quadrature only, not covariance/frame roundoff or input uncertainty.",
         "Instantaneous states cannot establish rectilinear-model applicability or covariance realism."]
     if cross_covariance is None and correlation != "CORRELATED":
         assumptions.append("Object position errors assumed independent; cross-covariance unavailable or explicitly zero.")

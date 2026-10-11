@@ -165,8 +165,6 @@ unsupported. Results are tested not to mutate the simulation.
 - Full `../.venv/bin/python -m pytest -q --maxfail=1`:
   **271 passed, 2 warnings in 262.27 s**, exit **0**, all prior tests rerun.
 
-## Historical Phase 1 and Phase 2 records
-
 ## Phase 3 — Checkpoint 8: API and CLI
 
 Status: PASSED. Added `POST /api/probability/calculate` for explicit SI
@@ -195,7 +193,54 @@ OpenAPI schemas and all local references validated.
 - Full `../.venv/bin/python -m pytest -q --maxfail=1`:
   **291 passed, 2 warnings in 279.38 s**, exit **0**, all 271 prior tests rerun.
 
-## Historical records below
+## Phase 3 — Checkpoint 9: final end-to-end verification
+
+Status: PASSED. All nine Phase 3 hard gates passed sequentially.
+
+- Actual command: `../.venv/bin/python -m pytest tests/test_probability_end_to_end.py -v -s --maxfail=1`:
+  **11 passed, 2 warnings in 27.63 s**, exit **0**. Four NASA CLI subprocesses
+  and actual uvicorn HTTP reference evaluations passed, using genuine CDM
+  states, individual covariance rotations and independent integration.
+- Actual live geometry/scenario/maneuver/optimizer/screening flow:
+  `socrates-f3f9e438db4c8a81fa4b93e5`; real MAX_PROB **1.0**, live Pc
+  **UNAVAILABLE_NO_COVARIANCE**. Explicit anisotropic user-assumption scenario
+  SGP4 Pc **6.299418159696612e-7**; matched numerical baseline scenario Pc
+  **6.304736762114633e-7**; modified scenario Pc **5.926506440598308e-7**;
+  delta **-3.782303215163255e-8**. These are scenarios, not measured risk.
+- Original analyzed TCA **2026-10-13T05:09:03.226914Z**; matched numerical
+  baseline **05:09:03.265412Z**; modified **05:09:03.383474Z**. Covariances
+  remain frozen at the original TCA, with no validity claim at shifted times.
+- Existing optimization returned **COMPLETE**, **13** actual simulations and
+  primary solutions; optional REPORT_ONLY screening returned **INCOMPLETE**
+  against a partial/stale **19,505-object** catalog (3 considered within its
+  declared 5-second/max-256-object cap), with no screening-policy pass.
+  Broader original screening pipelines are additionally rerun in the full suite.
+- Actual Pc benchmark: 30 samples per case, 120 total; medians / p95 in ms:
+  HST **1.645 / 3.035**, Terra/SL-16 **1.656 / 2.664**, Terra/Iridium
+  **1.459 / 1.935**, Swift **1.324 / 1.898**. Excludes input parsing, frame
+  setup, imports and transport. Largest observed relative NASA difference
+  **1.242e-10**. QUADPACK absolute estimates **4.378e-13 / 2.973e-14 /
+  2.009e-11 / 2.132e-12** respectively, strictly numerical quadrature only.
+- Hardened malformed optional velocity-covariance record rejection, numerical
+  covariance scale rejection, and degenerate GCRS RTN-basis handling; tested
+  real CLI direct-input files and explicit inapplicable-model API responses.
+- README includes actual reference/API/CLI usage, all five availability states,
+  matrix units/epochs/frames, explicit assumptions and limitations. Bundled
+  direct example is synthetic and explicitly ASSUMED; actual CLI exit **0**,
+  scenario Pc **0.0006783652889144094**, never labeled a live encounter.
+- Final full command: `cd backend && ../.venv/bin/python -m pytest -q --maxfail=1`:
+  **302 passed, 2 warnings in 297.29 s**, exit **0**. All **197** original
+  tests plus **105** Phase 3 tests; zero failures, skips, deselections or
+  disabled assertions. Actual source, API/CLI, startup, optimizer, secondary
+  screening and all scientific reference regressions rerun successfully.
+- All stages preserved in separate verified Git commits; pre-Phase-3 baseline
+  tagged `phase2-before-collision-probability`. `git diff --check` passed.
+  Remote main was verified at baseline `28130d7` before publication, with no
+  divergence. Completed changes are published to origin/main under the user's
+  standing commit-and-push workflow; remote hash is verified before handoff.
+  No dependency, frontend, decay, cleanup or default optimizer changes.
+
+## Historical Phase 1 and Phase 2 records
 
 The user's explicit instruction takes precedence over the pasted task's
 fix-and-continue wording: execute each checkpoint, record actual results,

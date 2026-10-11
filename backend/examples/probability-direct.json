@@ -1,0 +1,12 @@
+{
+  "kind": "ASSUMED",
+  "tca": "2026-10-11T00:00:00Z",
+  "frame": "GCRS",
+  "relative_position_m": [20, 0, 0],
+  "relative_velocity_m_s": [0, 0, 1000],
+  "covariance_primary_m2": [[50, 0, 0], [0, 50, 0], [0, 0, 50]],
+  "covariance_secondary_m2": [[50, 0, 0], [0, 50, 0], [0, 0, 50]],
+  "combined_hard_body_radius_m": 1,
+  "correlation": "INDEPENDENT",
+  "model_applicable": true
+}

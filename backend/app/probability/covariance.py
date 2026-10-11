@@ -17,6 +17,8 @@ def validate_covariance(matrix, size: int = 3) -> np.ndarray:
     if value.shape != (size, size) or not np.isfinite(value).all():
         raise ValueError(f"Covariance must be a finite {size}x{size} matrix in m²")
     scale = max(float(np.linalg.norm(value, ord=2)), np.finfo(float).tiny)
+    if not np.isfinite(scale):
+        raise ValueError("Covariance scales exceed numerical representation limits")
     tolerance = 64 * np.finfo(float).eps * scale
     if np.max(np.abs(value - value.T)) > tolerance:
         raise ValueError("Covariance must be symmetric")
@@ -38,15 +40,15 @@ def rotate_covariance(covariance, rotation) -> np.ndarray:
 
 def object_rtn_basis(state) -> np.ndarray:
     """Each object's own R, T, N columns, in its actual Cartesian frame."""
-    if state.frame == "GCRS":
-        return rtn_basis(state)
-    if state.frame not in {"TEME", "EME2000", "GCRF"}:
+    if state.frame not in {"GCRS", "TEME", "EME2000", "GCRF"}:
         raise UnsupportedCovariance(f"Unsupported state frame {state.frame}")
     r = np.asarray(state.position_m, dtype=float)
     v = np.asarray(state.velocity_m_s, dtype=float)
     h = np.cross(r, v)
     if not np.isfinite([r, v]).all() or np.linalg.norm(r) == 0 or np.linalg.norm(h) <= 1e-12 * np.linalg.norm(r) * np.linalg.norm(v):
         raise UnsupportedCovariance("Degenerate object state cannot define RTN")
+    if state.frame == "GCRS":
+        return rtn_basis(state)
     radial, normal = r / np.linalg.norm(r), h / np.linalg.norm(h)
     return np.column_stack((radial, np.cross(normal, radial), normal))
 

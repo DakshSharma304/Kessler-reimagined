@@ -113,6 +113,13 @@ def parse_cdm(text: str) -> ReferenceEncounter:
     tca = _utc(_required(header, "TCA"))
     parsed = []
     for fields in objects:
+        # Optional velocity covariance records remain metadata (the engine is
+        # position-only), but malformed supplied covariance records are errors.
+        for key, value in fields.items():
+            if re.fullmatch(r"C[RTN](?:DOT)?_[RTN](?:DOT)?", key):
+                power = key.count("DOT")
+                suffix = "" if power == 0 else "/s" if power == 1 else "/s**2"
+                _quantity(value, {f"m**2{suffix}": 1, f"km**2{suffix}": 1e6}, key)
         frame = _required(fields, "REF_FRAME")
         if frame not in {"EME2000", "GCRF"}:
             raise ValueError(f"Unsupported CDM state frame {frame}")
