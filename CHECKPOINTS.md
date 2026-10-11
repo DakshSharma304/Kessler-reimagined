@@ -59,6 +59,38 @@ Current API request/response schemas (actual OpenAPI references; none invented):
 | POST /api/objects/{object_id}/decay | PersistenceRequest | PersistenceAnalysis |
 | POST /api/objects/{object_id}/persistence | PersistenceRequest | PersistenceAnalysis |
 
+### Checkpoint 2 — PASSED
+
+- Added documented CelesTrak SATCAT metadata joins (PAY/R/B/DEB/UNK and
+  operational status); GP security markings are never used as object types.
+  Actual download contained 70,980 records. No GCAT/mass/dimensions were
+  invented; RCS is explicitly not aerodynamic area. Six preserved genuine
+  SATCAT fixture rows are documented with source/date.
+- Transparent illustrative policy: capped screening exposure by default;
+  optional capped modeled persistence/logarithmic RCS with configurable
+  weights. Missing positively weighted evidence makes the score unavailable,
+  never reweighted/zero-filled. Available persistence is censored scenario
+  evidence, not lifetime extrapolation. No atmospheric work during ranking.
+- Fixed-count stable ranking and bounded binary HiGHS effort selection;
+  actual resource sums verified. Shared events have unique/shared IDs, never
+  independently prevented-collision benefits. Scope/eligibility/exclusions
+  and missing-data indicators are explicit.
+- Focused command `../.venv/bin/python -m pytest tests/test_cleanup.py -v -s
+  --maxfail=1`: **17 passed, 1 warning, 41.83 s**, exit0. First run exposed
+  a test incorrectly comparing expected HTTP/ST​ALE_CACHE provenance labels;
+  corrected to assert unchanged data/checksum AND the changed retrieval mode,
+  reran the entire checkpoint. No scientific assertion weakened.
+- Independently enumerated 100 additional seeded small budget problems:
+  every proxy optimum matched and no budget/count violation, exit0. Initial
+  manual harness omitted tests/ from PYTHONPATH; corrected harness and reran.
+- Full current suite: **414 passed, 2 warnings in 572.95 s**, exit0, no skips.
+- Actual default 200-object pool selected **10114 SL-3 R/B**, **11672 SL-14
+  R/B**, **12139 SL-8 R/B**; published screening counts **46/12/18**. Capped
+  exposure scores tie at1, deterministic NORAD-ID tie break. **2,564** eligible
+  objects outside this bounded pool are explicitly disclosed, not a claim
+  of global ranking. Cold actual-source example took38.160785s including
+  catalog/SATCAT/SOCRATES ingestion. Modeled priority ranking, not mission plan.
+
 ## Phase 4 — Checkpoint policy
 
 The latest explicit user instruction and AGENTS.md require stopping at the

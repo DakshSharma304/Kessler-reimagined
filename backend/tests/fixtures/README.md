@@ -1,5 +1,12 @@
 # Actual public-source fixtures
 
+`satcat_actual.csv` preserves six complete rows from the actual 70,980-row
+download of https://celestrak.org/pub/satcat.csv on 2026-10-11 UTC. The documented
+schema/type/status definitions were checked at
+https://celestrak.org/satcat/satcat-format.php (updated 2026-09-23) and
+https://celestrak.org/satcat/status.php. These are dated offline metadata, not
+live records. RCS is radar cross section in m², never aerodynamic area or mass.
+
 `socrates_actual.csv` contains the first five rows actually downloaded from
 https://celestrak.org/SOCRATES/sort-minRange.csv during this implementation.
 HTTP Last-Modified: Sat, 10 Oct 2026 15:48:20 GMT. The full CSV contained
