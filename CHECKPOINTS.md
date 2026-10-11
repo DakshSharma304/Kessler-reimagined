@@ -62,6 +62,26 @@ in this repository, Vercel frontend and Modal Python backend. No ChatGPT Sites.
   remains an explicit final profiling concern. Original texture URL404;
   genuine NASA57730 asset downloaded200, attribution/source retained.
 
+### Checkpoint 3 — PASSED
+
+- Catalog-wide server search, known classifications, actual object metadata/
+  missing physical data/source links/epochs/orbit and related-encounter action.
+  Real SOCRATES search/sort/pagination, participant inspection, recalculated
+  analysis/Pc availability, honest source/model disagreements, two actual
+  Earth-fixed participant paths and local approach camera focus.
+- OpenAPI-generated types caught area_m2 vs aerodynamic_area_m2 naming;
+  corrected the consumer to the actual schema. Complete typecheck/build then
+  passed (11.52s), all8 unit tests passed/2.52s, exit0.
+- Full real-browser regression4 passed/1.0minute, exit0: actual ISS search/
+  metadata, actual COSMOS27056 SOCRATES analysis and both ITRS/km paths,
+  source sorting, missing-covariance labeling, all prior globe/shell controls.
+  Additional explicitly mocked503 source-error transport verifies a recoverable
+  UI, not a fake scientific result. Valid flows have no page/console errors.
+- Actual encounter screenshot reviewed; source/model geometry, unknowns,
+  enlarged markers and partial coverage remain explicit. No source replacement
+  or scientific engine modification. Scene5 draw calls/software GPU3.0FPS;
+  final performance refinement remains pending, not a hardware60FPS claim.
+
 ## Phase 5 — Checkpoint policy and verified baseline
 
 Phase 5 follows the latest explicit user policy: diagnose/correct failures,

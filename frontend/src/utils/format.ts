@@ -1,0 +1,3 @@
+export function number(value:number|null|undefined,digits=2){return value===null||value===undefined||!Number.isFinite(value)?'Unavailable':value.toLocaleString('en-US',{minimumFractionDigits:digits,maximumFractionDigits:digits});}
+export function timestamp(value:string|number|undefined){if(value===undefined)return 'Unavailable';const date=new Date(value);return Number.isNaN(date.getTime())?'Unavailable':date.toISOString().replace('T',' ').slice(0,19)+' UTC';}
+export function probability(value:number|null|undefined){return value===null||value===undefined?'Unavailable':value===0?'0 (numerical result)':value.toExponential(4);}

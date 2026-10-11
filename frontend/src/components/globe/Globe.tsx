@@ -48,7 +48,7 @@ function Scene(){
   useEffect(()=>{
     if(lastFocus.current===ui.cameraRevision)return;
     if(ui.cameraAction==='earth'){target.current.set(0,0,0);goal.current=new THREE.Vector3(2.9,1.65,3.6);lastFocus.current=ui.cameraRevision;}
-    else{const position=ui.cameraAction==='encounter'?focusPosition:selectedPosition;if(position){const p=new THREE.Vector3(...toWorld(position));target.current.copy(p.clone().multiplyScalar(.5));goal.current=p.clone().normalize().multiplyScalar(ui.cameraAction==='encounter'?2.3:2.8);lastFocus.current=ui.cameraRevision;}}
+    else{const position=ui.cameraAction==='encounter'?focusPosition:selectedPosition;if(position){const p=new THREE.Vector3(...toWorld(position));target.current.copy(p.clone().multiplyScalar(ui.cameraAction==='encounter'?1:.5));goal.current=ui.cameraAction==='encounter'?p.clone().add(p.clone().normalize().multiplyScalar(.28)):p.clone().normalize().multiplyScalar(2.8);lastFocus.current=ui.cameraRevision;}}
   },[ui.cameraRevision,ui.cameraAction,selectedPosition?.join(','),focusPosition?.join(',')]);
   useEffect(()=>{follow.current=ui.follow;},[ui.follow]);
   const stats=useRef({frames:0,since:performance.now(),fps:0});
@@ -61,10 +61,11 @@ function Scene(){
   const time=useUI(s=>s.time);const utcAngle=(time%86400000)/86400000*Math.PI*2;
   return <><ambientLight intensity={.32}/><directionalLight position={[-Math.cos(utcAngle)*5,1.3,Math.sin(utcAngle)*5]} intensity={2.2}/><Earth/>
     <points geometry={geometry} onPointerOver={event=>{event.stopPropagation();gl.domElement.style.cursor='pointer';}} onPointerOut={()=>gl.domElement.style.cursor='grab'} onClick={event=>{event.stopPropagation();if(event.index!==undefined && display[event.index])ui.selectObject(display[event.index].id);}}><shaderMaterial vertexShader={vertex} fragmentShader={fragment} transparent depthWrite={false}/></points>
-    {orbit.data&&selected && <Path path={orbit.data} color="#d5e1ed"/>}
+    {orbit.data&&selected && ui.view!=='Close approaches'&&ui.view!=='Avoidance planner'&&<Path path={orbit.data} color="#d5e1ed"/>}
     {visual.paths.filter(layer=>visual.comparison==='Overlay'||(visual.comparison==='Baseline'?layer.label!=='Maneuvered':layer.label!=='Baseline')).map(layer=><Path key={layer.id} path={layer.path} color={layer.color} dashed={layer.dashed}/>)}
     {selectedPosition&&<group position={toWorld(selectedPosition)}><mesh><sphereGeometry args={[.012,16,16]}/><meshBasicMaterial color="#f4f7ff"/></mesh><Html distanceFactor={4} className="object-label" occlude><span>{marker?.name || orbit.data?.name || selected}</span><small>NORAD {selected}</small></Html></group>}
-    <OrbitControls ref={controls} enableDamping dampingFactor={reduced?1:.07} minDistance={1.08} maxDistance={9} enablePan={false} rotateSpeed={.55} zoomSpeed={.8} onStart={()=>{goal.current=null;if(follow.current)ui.setFollow(false);}}/>
+    {visual.paths.map(layer=>{const sample=layer.path.samples[Math.floor(layer.path.samples.length/2)];return sample?.position_km?<mesh key={`marker-${layer.id}`} position={toWorld(sample.position_km)} onClick={event=>{event.stopPropagation();ui.selectObject(layer.path.id);}}><sphereGeometry args={[.0035,12,12]}/><meshBasicMaterial color={layer.color}/></mesh>:null;})}
+    <OrbitControls ref={controls} enableDamping dampingFactor={reduced?1:.07} minDistance={ui.cameraAction==='encounter'?.025:1.08} maxDistance={9} enablePan={false} rotateSpeed={.55} zoomSpeed={.8} onStart={()=>{goal.current=null;if(follow.current)ui.setFollow(false);}}/>
   </>;
 }
 export function Path({path,color,dashed=false}:{path:NonNullable<ReturnType<typeof useObjectOrbit>['data']>;color:string;dashed?:boolean}){

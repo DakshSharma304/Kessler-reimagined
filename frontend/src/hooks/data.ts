@@ -16,3 +16,8 @@ export function usePositions(){
     queryFn:({signal})=>request<Model<'PositionBatch'>>('/positions',{body:{object_ids:catalog.data!.items.map(object=>object.id),epoch:new Date(epoch).toISOString()},signal})});
 }
 export function useObjectOrbit(){const id=useUI(s=>s.selectedId);const reference=useUI(s=>s.referenceTime);return useQuery({queryKey:['orbit',id,reference],enabled:!!id,staleTime:300000,queryFn:({signal})=>request<Model<'ObjectTrajectory'>>(`/objects/${id}/trajectory?sample_count=181&start_time=${encodeURIComponent(new Date(reference).toISOString())}`,{signal})});}
+export function useDebounced<T>(value:T,delay=250){const [debounced,set]=useState(value);useEffect(()=>{const timer=setTimeout(()=>set(value),delay);return()=>clearTimeout(timer);},[value,delay]);return debounced;}
+export function useObjectInfo(){const id=useUI(s=>s.selectedId);return useQuery({queryKey:['object',id],enabled:!!id,queryFn:({signal})=>request<Model<'ObjectInfo'>>(`/objects/${id}/metadata`,{signal})});}
+export function useEncounter(){const id=useUI(s=>s.encounterId);return useQuery({queryKey:['encounter',id],enabled:!!id,queryFn:({signal})=>request<Model<'ScreenedEncounter'>>(`/encounters/${id}`,{signal})});}
+export function useAnalysis(){const id=useUI(s=>s.encounterId);return useQuery({queryKey:['analysis',id],enabled:!!id,retry:false,queryFn:({signal})=>request<Model<'ProbabilityBaselineAnalysis'>>(`/encounters/${id}/analyze`,{body:{probability_analysis:true},signal})});}
+export function useEncounterPaths(){const id=useUI(s=>s.encounterId);return useQuery({queryKey:['encounter-paths',id],enabled:!!id,staleTime:300000,queryFn:({signal})=>request<Model<'EncounterTrajectories'>>(`/encounters/${id}/trajectories?sample_count=121`,{signal})});}
