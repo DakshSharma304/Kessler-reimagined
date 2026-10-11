@@ -122,8 +122,6 @@ leaves calculated Pc unchanged; scientific answers are not hardcoded.
 - Full `../.venv/bin/python -m pytest -q --maxfail=1`:
   **255 passed, 2 warnings in 259.45 s**, exit **0**, all prior tests rerun.
 
-## Historical Phase 1 and Phase 2 records
-
 ## Phase 3 — Checkpoint 6: live availability and uncertainty scenarios
 
 Status: PASSED. All five required availability states implemented. Inputs
@@ -145,6 +143,31 @@ No covariance, radius or independence for known correlations is fabricated.
   **267 passed, 2 warnings in 258.41 s**, exit **0**, all 255 prior tests rerun.
 
 ## Historical records below
+
+## Phase 3 — Checkpoint 7: maneuver probability comparison
+
+Status: PASSED after correcting one new test's wrong existing field name.
+Initial targeted run: **1 failed, 3 passed**, exit **1**;
+`AttributeError: 'ManeuverOption' object has no attribute 'predicted_miss_distance_m'`.
+Inspection confirmed the existing field is `new_miss_distance_m`; corrected
+the assertion without changing the optimizer or weakening its condition.
+
+Comparisons require explicit `fixed_covariance=true`. Both individual object
+covariances are rotated at original analyzed SGP4 TCA and frozen in GCRS.
+Actual matched zero-burn and modified simulator relative states supply each
+calculation; no simulator replacement, covariance propagation or Pc objective
+is introduced. Output discloses published/original/baseline/modified TCAs,
+covariance epoch, offsets, baseline Pc, modified scenario Pc and delta Pc.
+Both values are illustrative even if the original matrices were supplied,
+because their validity at shifted TCAs is not established. Wrong epochs are
+unsupported. Results are tested not to mutate the simulation.
+
+- Corrected checkpoint plus existing optimizer/maneuver tests:
+  **18 passed, 1 warning in 16.64 s**, exit **0**.
+- Full `../.venv/bin/python -m pytest -q --maxfail=1`:
+  **271 passed, 2 warnings in 262.27 s**, exit **0**, all prior tests rerun.
+
+## Historical Phase 1 and Phase 2 records
 
 The user's explicit instruction takes precedence over the pasted task's
 fix-and-continue wording: execute each checkpoint, record actual results,
