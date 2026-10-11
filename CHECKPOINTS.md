@@ -102,6 +102,34 @@ in this repository, Vercel frontend and Modal Python backend. No ChatGPT Sites.
   Scientific engines and API contracts unchanged. Screening remains explicitly
   incomplete where returned, not an operational safety assessment.
 
+### Checkpoint 5 — PASSED
+
+- Live SOCRATES missing covariance remains UNAVAILABLE_NO_COVARIANCE with null
+  Pc, separate MAX_PROB; explicit per-object RTN/other-frame diagonal sigma
+  assumptions and radius produce backend scenario Pc. Actual selected optimizer
+  maneuver is recomputed with disclosed fixed-inertial covariance. Historical
+  NASA CARA CDM is evaluated independently by the existing backend; actual
+  Terra/Iridium benchmark published and calculated Pc both 2.1174e-2,
+  absolute difference 6.217e-15 in browser response.
+- Orbital decay UI supplies explicit mass, area, Cd, finite horizon and weather;
+  backend returned all three actual LOW/NOMINAL/HIGH drag propagations. Chart
+  uses returned geodetic altitude and osculating perigee/apogee samples on a
+  shared altitude scale, with censored boundary status disclosed.
+- Cleanup UI joins actual DEBRIS/ROCKET_BODY catalog candidates and backend
+  ranking, exposes weights, exclusions and abstract effort costs. Real browser
+  showed selected targets under a two-target cap, at most one under a one-unit
+  cost budget, then zero under a zero-target cap. Selected IDs were found in
+  actual successful bulk position responses and highlighted on the globe.
+- Data & methods fetches real status/source coverage and weather status, gives
+  coordinate/unit/model details and linked NASA/public-domain visual provenance.
+  Stale encounter paths on this view were found in screenshot review and
+  cleared; tiny relative NASA difference now uses scientific notation.
+- Full gate: typecheck/build exit0, **16 unit tests**/7.71s, **9 actual-browser
+  tests**/2.7min exit0, including all prior frontend regressions. Valid flows
+  had no browser console/page errors. Software SwiftShader interaction measured
+  1.7FPS/5draw calls; hardware-browser performance remains to be profiled.
+  Scientific Python engines, contracts and optimizer objective unchanged.
+
 ## Phase 5 — Checkpoint policy and verified baseline
 
 Phase 5 follows the latest explicit user policy: diagnose/correct failures,

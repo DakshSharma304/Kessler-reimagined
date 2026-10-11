@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { request,type Model } from '../api/client';
 import { useUI } from '../stores/ui';
 import {useEffect,useState} from 'react';
+import {useVisual} from '../stores/visual';
 
 export function useCatalog(){return useQuery({queryKey:['globe-catalog'],staleTime:300000,queryFn:async({signal})=>{
   const first=await request<Model<'CatalogPage'>>('/objects?limit=500',{signal});
@@ -10,10 +11,13 @@ export function useCatalog(){return useQuery({queryKey:['globe-catalog'],staleTi
 }});}
 export function usePositions(){
   const catalog=useCatalog();const time=useUI(s=>s.time);const [requestedTime,setRequestedTime]=useState(time);
+  const selected=useUI(s=>s.selectedId);const highlights=useVisual(s=>s.highlightIds);
   useEffect(()=>{const timer=setTimeout(()=>setRequestedTime(time),220);return()=>clearTimeout(timer);},[time]);
   const epoch=Math.floor(requestedTime/5000)*5000;
-  return useQuery({queryKey:['positions',epoch,catalog.data?.catalog.snapshot_sha256],enabled:!!catalog.data?.items.length,staleTime:300000,
-    queryFn:({signal})=>request<Model<'PositionBatch'>>('/positions',{body:{object_ids:catalog.data!.items.map(object=>object.id),epoch:new Date(epoch).toISOString()},signal})});
+  const base=catalog.data?.items.map(object=>object.id)||[];const extras=[...new Set([selected,...highlights].filter((id):id is string=>!!id&&!base.includes(id)))].slice(0,50);
+  const ids=[...base.slice(0,2000-extras.length),...extras];
+  return useQuery({queryKey:['positions',epoch,catalog.data?.catalog.snapshot_sha256,extras.join(',')],enabled:!!ids.length,staleTime:300000,
+    queryFn:({signal})=>request<Model<'PositionBatch'>>('/positions',{body:{object_ids:ids,epoch:new Date(epoch).toISOString()},signal})});
 }
 export function useObjectOrbit(){const id=useUI(s=>s.selectedId);const reference=useUI(s=>s.referenceTime);return useQuery({queryKey:['orbit',id,reference],enabled:!!id,staleTime:300000,queryFn:({signal})=>request<Model<'ObjectTrajectory'>>(`/objects/${id}/trajectory?sample_count=181&start_time=${encodeURIComponent(new Date(reference).toISOString())}`,{signal})});}
 export function useDebounced<T>(value:T,delay=250){const [debounced,set]=useState(value);useEffect(()=>{const timer=setTimeout(()=>set(value),delay);return()=>clearTimeout(timer);},[value,delay]);return debounced;}

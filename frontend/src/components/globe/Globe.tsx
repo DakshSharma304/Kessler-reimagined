@@ -40,6 +40,7 @@ function Scene(){
   const controls=useRef<Controls>(null);const {camera,gl,invalidate}=useThree();const goal=useRef<THREE.Vector3|null>(null);const target=useRef(new THREE.Vector3());const follow=useRef(ui.follow);const lastFocus=useRef(-1);
   const display=useMemo(()=>positions.data?.items.filter(item=>item.propagation_status==='OK' && item.position_km && visual.classes.includes(item.classification)) || [],[positions.data,visual.classes]);
   const visibleLayers=visual.paths.filter(layer=>visual.comparison==='Overlay'||(visual.comparison==='Baseline'?layer.label!=='Maneuvered':layer.label!=='Baseline'));
+  gl.domElement.dataset.highlightIds=visual.highlightIds.join(',');
   const geometry=useMemo(()=>{const shape=new THREE.BufferGeometry();const points:number[]=[],tints:number[]=[];
     for(const item of display){points.push(...toWorld(item.position_km!));const color=new THREE.Color(colors[item.classification]);if(visual.highlightIds.length && !visual.highlightIds.includes(item.id))color.multiplyScalar(.22);tints.push(color.r,color.g,color.b);}
     shape.setAttribute('position',new THREE.Float32BufferAttribute(points,3));shape.setAttribute('color',new THREE.Float32BufferAttribute(tints,3));shape.computeBoundingSphere();return shape;
