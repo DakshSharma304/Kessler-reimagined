@@ -31,6 +31,35 @@ def teme_to_gcrs(state: StateVector) -> StateVector:
                        velocity_m_s=tuple(transformed.velocity.d_xyz.to_value(u.m / u.s)))
 
 
+def transform_states(states: list[StateVector], target: str) -> list[StateVector]:
+    """Vectorized Astropy transforms of both position and velocity, at each UTC.
+
+    This is also the inverse needed to express GCRS differential trajectories
+    in the same TEME frame as bulk SGP4 catalog states. Never relabel a frame.
+    """
+    if target not in {"TEME", "GCRS"}:
+        raise ValueError("Supported target frames are TEME and GCRS")
+    if not states:
+        return []
+    source = states[0].frame
+    if any(state.frame != source for state in states):
+        raise ValueError("Batch transform requires a single source frame")
+    if source == target:
+        return list(states)
+    times = Time([state.timestamp for state in states])
+    representation = CartesianRepresentation(
+        np.array([state.position_m for state in states]).T * u.m,
+        differentials=CartesianDifferential(
+            np.array([state.velocity_m_s for state in states]).T * u.m / u.s))
+    source_type, target_type = (TEME, GCRS) if source == "TEME" else (GCRS, TEME)
+    transformed = source_type(representation, obstime=times).transform_to(target_type(obstime=times))
+    positions = transformed.cartesian.xyz.to_value(u.m).T
+    velocities = transformed.velocity.d_xyz.to_value(u.m / u.s).T
+    return [StateVector(timestamp=state.timestamp, frame=target,
+                        position_m=tuple(position), velocity_m_s=tuple(velocity))
+            for state, position, velocity in zip(states, positions, velocities)]
+
+
 def earth_pole_gcrs(timestamp: datetime) -> np.ndarray:
     at = Time(timestamp)
     pole = ITRS(CartesianRepresentation([0, 0, 1] * u.m), obstime=at).transform_to(GCRS(obstime=at))

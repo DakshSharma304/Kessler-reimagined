@@ -63,7 +63,7 @@ class OrbitalRecord(BaseModel):
     model_config = ConfigDict(frozen=True, allow_inf_nan=False)
 
     elements: GPElements
-    source: Literal["CelesTrak GP"] = "CelesTrak GP"
+    source: Literal["CelesTrak GP", "Local OMM"] = "CelesTrak GP"
     source_url: str
     fetched_at: AwareDatetime
     content_sha256: str

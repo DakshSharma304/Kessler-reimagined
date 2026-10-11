@@ -11,6 +11,7 @@ from scipy.optimize import minimize_scalar
 from app.models.encounter import Encounter
 from app.models.maneuver import ManeuverConstraints, Objective
 from app.models.orbital import OrbitalRecord
+from app.models.screening import OptimizationScreeningSummary
 from app.optimization.objectives import objective_key
 from app.physics.encounters import BaselineAnalysis, ClosestApproach, CalculationUnavailable, analyze_encounter
 from app.physics.maneuvers import MODEL_ASSUMPTIONS, MatchedDynamics, ManeuverError, simulate_maneuver
@@ -42,7 +43,8 @@ class ManeuverOption(BaseModel):
 class OptimizationResult(BaseModel):
     encounter_id: str
     maneuvering_object_id: str
-    status: Literal["COMPLETE", "PARTIAL", "NO_FEASIBLE_SOLUTION"]
+    status: Literal["COMPLETE", "PARTIAL", "NO_FEASIBLE_SOLUTION",
+                    "INCOMPLETE", "UNAVAILABLE", "NO_ACCEPTABLE_SCREENED_SOLUTION"]
     result_label: Literal["Best evaluated maneuvers; no global optimality guarantee"] = "Best evaluated maneuvers; no global optimality guarantee"
     objective: Objective
     constraints: ManeuverConstraints
@@ -59,6 +61,8 @@ class OptimizationResult(BaseModel):
     fuel_budget_delta_v_m_s: float | None
     model_assumptions: list[str]
     warnings: list[str]
+    secondary_screening: OptimizationScreeningSummary | None = None
+    evaluated_finalists: list[ManeuverOption] = Field(default_factory=list, exclude=True)
 
 
 class SearchLimitReached(Exception):
@@ -67,7 +71,9 @@ class SearchLimitReached(Exception):
 
 def optimize_maneuver(encounter: Encounter, first: OrbitalRecord, second: OrbitalRecord,
                        constraints: ManeuverConstraints, search: SearchSettings | None = None,
-                       now: datetime | None = None) -> OptimizationResult:
+                       now: datetime | None = None, *, retain_finalists: int = 0) -> OptimizationResult:
+    if not 0 <= retain_finalists <= 10:
+        raise ValueError("Retain at most ten primary finalists")
     started = time.perf_counter()
     search = search or SearchSettings()
     now = now or datetime.now(UTC)
@@ -195,4 +201,5 @@ def optimize_maneuver(encounter: Encounter, first: OrbitalRecord, second: Orbita
                           "Bounded deterministic samples plus local time/magnitude/direction exploration; no global optimum guarantee.",
                           "Clearance improvement flag requires >1 mm modeled change; no uncertainty inference."] ,
         warnings=warnings,
+        evaluated_finalists=candidates[:retain_finalists],
     )

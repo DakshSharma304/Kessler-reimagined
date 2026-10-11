@@ -4,6 +4,8 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 from app.models.encounter import Encounter
 from app.models.maneuver import ManeuverConstraints
+from app.models.catalog import CatalogMetadata
+from app.models.screening import ScreeningRequest, SecondaryOptimizationSettings
 from app.optimization.optimizer import SearchSettings
 
 
@@ -44,3 +46,15 @@ class SimulateRequest(BaseModel):
 
 class OptimizeRequest(ManeuverConstraints):
     search: SearchSettings = Field(default_factory=SearchSettings)
+    secondary_screening: SecondaryOptimizationSettings | None = None
+
+
+class ScreenRequest(ScreeningRequest):
+    # The route supplies identity; an explicitly supplied body ID must match.
+    encounter_id: str | None = None
+
+
+class CatalogStatusResponse(BaseModel):
+    status: Literal["NOT_LOADED", "LOADED"]
+    catalog: CatalogMetadata | None
+    warnings: list[str]
