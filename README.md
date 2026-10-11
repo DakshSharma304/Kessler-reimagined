@@ -1,4 +1,23 @@
-# Kessler backend
+# Kessler
+
+## Phase 6 — interactive frontend
+
+The repository now includes a React/TypeScript/Three.js orbital interface in
+[`frontend/`](frontend/README.md). It consumes the verified FastAPI services for
+real catalog positions, close approaches, maneuver comparisons, covariance
+probability scenarios, orbital persistence and debris cleanup priorities.
+The browser performs no orbital propagation. The visual system uses restrained
+graphite surfaces and neutral controls; scientific classifications, paths and
+warnings carry only purposeful color.
+
+Local startup, Vercel frontend and Modal backend configuration are documented
+in [`DEPLOYMENT.md`](DEPLOYMENT.md). The exact API, units, statuses and source
+contracts are in [`FRONTEND_CONTRACT.md`](FRONTEND_CONTRACT.md). Phase 6 browser
+and backend verification is recorded in [`CHECKPOINTS.md`](CHECKPOINTS.md).
+The final deployment gate is not yet complete: the public Vercel/Modal rollout
+and the post-change full backend regression suite remain unverified.
+
+## Earlier backend phases
 
 Python 3.12+ backend for the first Kessler orbital avoidance pipeline.
 Implementation proceeds in tested stages; see `CHECKPOINTS.md` for completed
@@ -33,9 +52,10 @@ with zero failed, skipped or deselected tests.
 
 ## Phase 5 — frontend integration
 
-Backend-only Phase 5 integrates the existing scientific engines with a
+Backend-only Phase 5 integrated the existing scientific engines with a
 visualization-ready catalog, optional compact persistence trajectories and a
-transparent debris-cleanup priority/portfolio MVP. No frontend is implemented.
+transparent debris-cleanup priority/portfolio MVP. The frontend was added in
+Phase 6 above.
 **All six Phase5 checkpoints passed: 445 automated tests, no skipped tests;
 all six real public API workflows and four NASA reference Pc comparisons pass.**
 KESSLER BACKEND: FRONTEND READY.

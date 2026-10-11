@@ -159,6 +159,38 @@ in this repository, Vercel frontend and Modal Python backend. No ChatGPT Sites.
   6draw calls including selection halo. This is not hardware60FPS evidence;
   demand rendering limits idle GPU work. No scientific backend changes.
 
+### Checkpoint 7 — INCOMPLETE, final regression/deployment deferred by user
+
+- Added a Vercel static SPA configuration, a Modal ASGI adapter for the same
+  FastAPI application, exact-origin CORS secret configuration, and local
+  deployment validator. Added `DEPLOYMENT.md`, frontend usage guidance and
+  five reviewed browser screenshots. No public cloud deployment was attempted:
+  there is no verified project URL, account authorization, or final origin.
+- The local deployment validator exited 0: Modal SDK 1.6.1 entrypoint,
+  production FastAPI health/OpenAPI, exact allowed/denied CORS preflights and
+  Vercel static configuration. Typecheck and production build exited 0;
+  production build with an explicit API URL was served via `vite preview` on
+  port 3000 and its real-backend Chromium shell smoke passed (1 test, 11.0 s).
+- The focused six-workflow **real-browser** demo passed (1 test, 46.5 s):
+  1,939 valid catalog positions, 181 orbit samples, SOCRATES encounter
+  `socrates-599855ce2ca729ae50cb34e9`, two optimizer alternatives, 128
+  screened objects with status `INCOMPLETE`, live Pc
+  `UNAVAILABLE_NO_COVARIANCE`, illustrative assumed Pc
+  `4.471084241489761e-5`, three decay scenarios and two selected cleanup
+  candidates (`10114`, `11672`). The source miss distance was 27 m while
+  this model gave 897.187 m; the interface reports source/model disagreement.
+  These are dated live results, not guaranteed future values.
+- The user requested a faster handoff and explicitly allowed leaving the
+  longer regression work untested. The post-deployment-change full Python
+  suite was deliberately interrupted after **201 passed** in 202.85 s;
+  pytest exited 2 due `KeyboardInterrupt`, not a failed assertion. The
+  previously verified 445-test Phase 5 baseline and Phase 6 checkpoint 6
+  frontend suite remain the last **complete** regressions. The Phase 6 final
+  gate is therefore **not passed**; do not claim public deployment or final
+  demo readiness from the partial run. Still needed: full current Python and
+  frontend regression suites, authenticated public Modal/Vercel deployment,
+  browser checks against their real origins, and hardware-browser profiling.
+
 ## Phase 5 — Checkpoint policy and verified baseline
 
 Phase 5 follows the latest explicit user policy: diagnose/correct failures,

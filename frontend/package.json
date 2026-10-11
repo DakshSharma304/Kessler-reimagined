@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "smoke": "playwright test e2e/shell.spec.ts",
     "format": "prettier --write 'src/**/*.{ts,tsx,css}' 'e2e/**/*.ts' '*.ts' 'index.html' '!src/api/schema.d.ts'",
     "format:check": "prettier --check 'src/**/*.{ts,tsx,css}' 'e2e/**/*.ts' '*.ts' 'index.html' '!src/api/schema.d.ts'",
     "generate:api": "openapi-typescript ../openapi.json -o src/api/schema.d.ts"

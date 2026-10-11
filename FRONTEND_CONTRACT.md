@@ -1,8 +1,10 @@
 # Kessler frontend integration contract
 
-Backend only. No frontend or JavaScript orbital physics is included.
-All six Phase5 checkpoints passed: 445 automated tests and all six actual public
-API workflows verified. Scientific limitations must remain visible in UI.
+This is the verified backend API contract consumed by the React frontend in
+`frontend/`. No JavaScript orbital physics is included. All six Phase 5 backend
+checkpoints passed: 445 automated tests and all six public API workflows were
+verified. The Phase 6 frontend checks and deployment status are recorded in
+`CHECKPOINTS.md` and `DEPLOYMENT.md`; scientific limitations remain visible.
 
 ## Startup and configuration
 
@@ -18,9 +20,11 @@ cd backend
 When the existing environment is installed, only the final two lines are needed.
 On Windows use the virtual environment's `Scripts/python.exe` equivalent.
 API base URL: `http://127.0.0.1:8000/api`; OpenAPI: `http://127.0.0.1:8000/openapi.json`.
-Local port8000; docs `/docs`. Configure the separately hosted frontend's backend
-base URL in its deployment configuration; the backend does not determine a
-production public URL or implement a frontend build system.
+Local port8000; docs `/docs`. Start the frontend from `frontend/` with `npm ci`
+then `VITE_API_BASE_URL=http://127.0.0.1:8000/api npm run dev`. It serves on
+port5173. For production, set the same build-time variable to the actual Modal
+ASGI URL plus `/api` in Vercel; see `DEPLOYMENT.md`. The backend does not
+determine a production public URL.
 
 Environment variables are read from the process (the `.env.example` is not
 automatically loaded; no dotenv dependency):

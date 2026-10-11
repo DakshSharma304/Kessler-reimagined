@@ -1,4 +1,7 @@
 import { defineConfig } from '@playwright/test';
+import { existsSync } from 'node:fs';
+const chromiumPath =
+  process.env.CHROMIUM_PATH || (existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined);
 export default defineConfig({
   testDir: './e2e',
   timeout: 120000,
@@ -9,7 +12,7 @@ export default defineConfig({
     viewport: { width: 1440, height: 900 },
     trace: 'retain-on-failure',
     launchOptions: {
-      executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium',
+      executablePath: chromiumPath,
       args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
     },
   },
