@@ -82,6 +82,26 @@ in this repository, Vercel frontend and Modal Python backend. No ChatGPT Sites.
   or scientific engine modification. Scene5 draw calls/software GPU3.0FPS;
   final performance refinement remains pending, not a hardware60FPS claim.
 
+### Checkpoint 4 — PASSED
+
+- Editable, validated capability/RTN/budget/time/target/objective constraints;
+  real optimizer alternatives, same-anchor numerical ITRS paths, comparison
+  layers, actual returned-sample timeline scrubbing and bounded secondary
+  screening. Complete positive alerts are never mislabeled an all-clear.
+- Entire gate rerun: typecheck/build exit0 (9.69s), 13 unit tests/3.55s,
+  6 real-browser tests/1.1minute, exit0. Actual .1 and .2m/s requests,
+  alternative switching, primary/matched trajectories, actual 128-object
+  screen, zero-delta-v impossible target/no-feasible result all verified.
+- A label containing helper text caused the initial browser selector timeout;
+  explicit control labels/described-by plus a regression test fixed accessibility.
+  Error-source rendering exceeded the harness's default short wait under
+  software GPU/retries; explicit 30s UI wait retains the exact error assertion.
+  Entire checkpoint/prior regressions rerun after fixes; none bypassed.
+- Actual desktop screenshot reviewed. Idle globe now renders on demand;
+  SwiftShader interaction measured5.6FPS/5draw calls, not hardware60FPS.
+  Scientific engines and API contracts unchanged. Screening remains explicitly
+  incomplete where returned, not an operational safety assessment.
+
 ## Phase 5 — Checkpoint policy and verified baseline
 
 Phase 5 follows the latest explicit user policy: diagnose/correct failures,

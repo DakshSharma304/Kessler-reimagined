@@ -6,5 +6,6 @@ import App from './App';
 import { retryRead } from './api/client';
 import './styles/global.css';
 import './styles/globe.css';
+import './styles/analysis.css';
 const queryClient=new QueryClient({defaultOptions:{queries:{staleTime:30000,retry:retryRead,refetchOnWindowFocus:false},mutations:{retry:false}}});
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><QueryClientProvider client={queryClient}><MotionConfig reducedMotion="user" transition={{type:'spring',stiffness:340,damping:34}}><App/></MotionConfig></QueryClientProvider></React.StrictMode>);

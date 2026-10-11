@@ -13,6 +13,6 @@ test('real catalog-wide search, metadata, SOCRATES selection and actual paths',a
 });
 test('source unavailable has a readable recoverable state',async({page})=>{
  await page.route('**/api/objects?**',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({status:'UNAVAILABLE',detail:'Catalog source is temporarily unavailable.'})}));
- await page.goto('/');await expect(page.getByRole('alert').first()).toContainText('Catalog source is temporarily unavailable.');
+ await page.goto('/');await expect(page.getByRole('alert').first()).toContainText('Catalog source is temporarily unavailable.',{timeout:30000});
  await expect(page.getByRole('button',{name:'Try again'}).first()).toBeVisible();await expect(page.getByRole('navigation')).toBeVisible();
 });
